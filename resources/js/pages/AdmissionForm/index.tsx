@@ -1,17 +1,34 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAppearance } from '@/hooks/use-appearance';
-import { Loader2 } from 'lucide-react';
 import GcsLogoSvg from '@/assets/Logo.svg';
 import { cn } from '@/lib/utils';
-import BoxSection from './_components/BoxSection';
 import { CheckedState } from '@radix-ui/react-checkbox';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
+import AdmissionFormLayout from '@/layouts/admission-form-layout';
+import { AxiosWrapper } from '@/lib/fetchWrapper';
+import {
+    Loader2,
+    User,
+    School,
+    BookOpen,
+    Phone,
+    Home,
+    Calendar,
+    Mail,
+    FileText,
+    AlertCircle,
+    Clock,
+    Briefcase,
+    Percent,
+    MapPin,
+    UserPlus,
+} from 'lucide-react';
+import InputError from '@/components/input-error';
 
 interface InterSubject {
     id: number;
@@ -78,6 +95,8 @@ interface AdmissionFormProps {
 }
 
 const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
+    const [processing, setProcessing] = useState(false);
+    const [errors, setErrors] = useState<Partial<FormData>>({});
     const { updateAppearance } = useAppearance();
     const [interSubjects, setInterSubjects] = useState<InterSubject[]>([
         { id: 1, name: 'English', readOnly: true },
@@ -89,7 +108,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
         { id: 7, name: '', readOnly: false },
     ]);
 
-    const { data, setData, post, processing, transform, errors } = useForm<FormData>({
+    const { data, setData } = useForm<FormData>({
         shift: '',
         program_category: '',
         program_value: '',
@@ -152,29 +171,54 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        transform((data) => {
-            const formData = new FormData();
-        
-            // Handle other fields
-            Object.entries(data).forEach(([key, value]) => {
-              if (key === 'photo' && value) {
-                formData.append(key, value);
-              } else if (key === 'inter_subjects' || key === 'examination') {
-                formData.append(key, JSON.stringify(value));
-              } else {
-                formData.append(key, value ? value.toString() : '');
-              }
+        if (!data.photo) {
+            toast.error('Please upload a photo');
+            window.scrollTo(0, 0);
+            return;
+        }
+
+        setProcessing(true);
+        setErrors({});
+
+        const formData = new FormData();
+        if (Object.keys(data).length > 0) {
+            Object.keys(data).forEach((key) => {
+                if (key === 'inter_subjects') {
+                    formData.append(key, JSON.stringify(interSubjects.map((subject) => subject.name)));
+                } else if (key === 'examination') {
+                    formData.append(key, JSON.stringify(data[key]));
+                } else {
+                    formData.append(key, data[key]);
+                }
             });
-        
-            return formData;
-          });
+        }
 
-        post('/admission-form', {
-            preserveScroll: true,
-            onSuccess: () => {
+        AxiosWrapper({
+            url: route('admission-form.store'),
+            method: 'POST',
+            body: formData,
+        })
+            .then((response) => {
+                toast.success(response.data.message);
+                if (response.data.redirectUrl) {
+                    setTimeout(() => {
+                        window.location.href = response.data.redirectUrl;
+                    }, 1000);
+                }
+            })
+            .catch((error) => {
+                if (error.response.status === 422 && error.response.data.errors) {
+                    setErrors(error.response.data.errors);
+                }
 
-            },
-        });
+                if (error.response.data.message) {
+                    toast.error(error.response.data.message);
+                }
+            })
+            .finally(() => {
+                setProcessing(false);
+            });
+
     };
 
     // Handle input change for additional subjects
@@ -206,490 +250,591 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
     };
 
     return (
-        <>
-            <Head title="Admission Form" />
-            <div className="container mx-auto p-4">
-                <Card className="w-full max-w-7xl mx-auto border-2 border-black">
-                    <div className="p-4">
-                        {/* Header */}
-                        <div className="text-center border-b-2 border-black pb-2 flex items-center justify-center">
-                            <div className="mr-2">
-                                <img src={GcsLogoSvg} alt="College Logo" className="h-40" />
+        <AdmissionFormLayout>
+            <div className="bg-gray-50 flex items-center justify-center p-4 sm:p-6 md:p-8 print:p-0 print:bg-white">
+                <Head title="Admission Form" />
+                <div className="max-w-7xl w-full bg-white shadow-lg rounded-lg p-6 sm:p-8 print:shadow-none print:p-4">
+                    {/* Header */}
+                    <div className="flex flex-col items-center justify-center">
+                        <div className="flex flex-col lg:flex-row items-center justify-between w-full mb-4">
+                            {/* Logo and College Details */}
+                            <div className="flex flex-col sm:flex-row items-center text-center sm:text-left mb-4 lg:mb-0">
+                                <img src={GcsLogoSvg} alt="College Logo" className="h-20 sm:h-24 mb-4 sm:mb-0 sm:mr-4" />
+                                <div>
+                                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Government Graduate College of Science</h1>
+                                    <h2 className="text-lg sm:text-xl text-gray-700">گورنمنٹ گریجوایٹ کالج آف سائنس</h2>
+                                    <p className="text-sm text-gray-600">
+                                        Wahdat Road, Lahore. (
+                                        <a
+                                            href="https://sites.google.com/gcslahore.edu.pk/ggcs/home"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:underline"
+                                        >
+                                            www.gcslahore.edu.pk
+                                        </a>
+                                        )
+                                    </p>
+                                    <p className="mt-2 text-sm font-semibold text-gray-800 border rounded-full border-gray-300 px-4 py-1 inline-block">
+                                        APPLICATION FOR ADMISSION - {new Date().getFullYear()}
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h1 className="text-4xl font-bold text-destructive">
-                                    Government Graduate College of Science
-                                </h1>
-                                <h1 className="text-2xl text-right">
-                                    گورنمنٹ گریجوایٹ کالج آف سائنس
-                                </h1>
-                                <p className='text-left mb-1'>
-                                    Wahdat Road, Lahore.
-                                    (
-                                    <a href="https://sites.google.com/gcslahore.edu.pk/ggcs/home" target="_blank" rel="noopener noreferrer">
-                                        www.gcslahore.edu.pk
-                                    </a>
-                                    )
-                                </p>
-                                <h2 className="inline text-lg border rounded-2xl border-black p-1.5">
-                                    APPLICATION FOR ADMISSION-{new Date().getFullYear()}
-                                </h2>
-                            </div>
-                            <div className="ml-2 border border-black w-36 h-44 flex items-center justify-center relative">
-                                {data.photo && (
-                                    <img
-                                        src={URL.createObjectURL(data.photo)}
-                                        alt="Uploaded Photo"
-                                        className="absolute w-full h-full object-cover"
-                                    />
+
+                            {/* Photo Upload */}
+                            <div className="relative w-32 h-40 sm:w-36 sm:h-44 border border-gray-300 rounded-md flex items-center justify-center shrink-0">
+                                {data.photo ? (
+                                    <img src={URL.createObjectURL(data.photo)} alt="Uploaded Photo" className="w-full h-full object-cover rounded-md" />
+                                ) : (
+                                    <p className="text-xs text-gray-500 text-center px-2">
+                                        Attach one recent Photograph (2" x 1.5") with blue background
+                                    </p>
                                 )}
                                 <input
                                     type="file"
                                     accept="image/*"
                                     className="absolute w-full h-full opacity-0 cursor-pointer"
-                                    onChange={(e) => {
-                                        if (e.target.files) {
-                                            setData('photo', e.target.files[0]);
-                                        }
-                                    }}
+                                    onChange={(e) => e.target.files && setData('photo', e.target.files[0])}
+                                    required
                                 />
-                                {!data.photo && (
-                                    <p className="text-xs text-center">
-                                        Attach one recent Photograph of size 2" x 1.5" with blue background
-                                    </p>
-                                )}
                             </div>
                         </div>
+                    </div>
 
-                        {/* Form Fields */}
-                        <form onSubmit={handleSubmit} className="mt-4">
+                    {/* Form */}
+                    <form onSubmit={handleSubmit} className="space-y-8">
+                        {/* Shift */}
+                        <div className="border-t border-gray-200 pt-6">
+                            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                                <span className={cn("w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 text-sm", { 'bg-red-100 text-red-600': errors.shift })}>1</span>
+                                Shift Selection
+                            </h2>
+                            <p className="text-sm text-gray-600 mb-4">Select your preferred shift.</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {shifts.map((shift) => (
+                                    <div key={shift} className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id={`shift_${shift}`}
+                                            checked={data.shift === shift}
+                                            onCheckedChange={(checked) => setData('shift', checked ? shift as 'Morning' | 'Evening' : '')}
+                                        />
+                                        <Label htmlFor={`shift_${shift}`} className="text-sm font-medium flex items-center">
+                                            <Clock className="h-4 w-4 mr-1" /> {shift}
+                                        </Label>
+                                    </div>
+                                ))}
+                            </div>
+                            {errors.shift && <p className="text-sm text-red-600 mt-2">{errors.shift}</p>}
+                        </div>
 
-                            {/* Shift */}
-                            <BoxSection
-                                title='Shift'
-                                description='Select your preferred shift.'
-                                errorMessage={errors.shift}
-                            >
-                                <div className="grid grid-cols-2 gap-2">
-                                    {shifts.map((shift) => (
-                                        <div key={shift} className="border border-black/30 p-1 text-center">
-                                            <div className="flex items-center justify-center">
-                                                <Checkbox
-                                                    id={`shift_${shift}`}
-                                                    checked={data.shift === shift}
-                                                    onCheckedChange={(checked) => {
-                                                        if (checked) {
-                                                            setData('shift', shift as 'Morning' | 'Evening');
-                                                        } else {
-                                                            setData('shift', '');
-                                                        }
-                                                    }}
-                                                    className="mr-2"
-                                                />
-                                                <Label htmlFor={`shift_${shift}`} className="text-sm">
-                                                    {shift}
-                                                </Label>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </BoxSection>
-
-                            <BoxSection
-                                title='Program'
-                                description='Please select only one program when applying. If you wish to apply for multiple programs, submit a separate form for each.'
-                                className="space-y-2"
-                                descriptionClassName="text-red-600"
-                                errorMessage={errors.program_category || errors.program_value}
-                            >
-                                {/* Dynamic Programs */}
+                        {/* Program Selection */}
+                        <div className="border-t border-gray-200 pt-6">
+                            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                                <span className={cn("w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 text-sm", { 'bg-red-100 text-red-600': errors.program_category || errors.program_value })}>2</span>
+                                Program Selection
+                            </h2>
+                            <p className="text-sm text-red-600 mb-4">
+                                Please select only one program. Submit a separate form for each additional program.
+                            </p>
+                            <div className="space-y-6">
                                 {programGroups.map((group) => (
                                     <div key={group.label}>
-                                        <div className="text-center font-bold underline mb-2 uppercase">
-                                            {group.label}
-                                        </div>
-                                        <div className="grid grid-cols-4 gap-2">
+                                        <h3 className="text-lg font-medium text-gray-700 mb-2 flex items-center">
+                                            <BookOpen className="h-4 w-4 mr-1" /> {group.label}
+                                        </h3>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                             {group.options.map((degree) => (
-                                                <div key={degree} className="border border-black/30 p-1 text-center">
-                                                    <div className="flex items-center justify-center">
-                                                        <Checkbox
-                                                            id={`${group.category}_${degree}`}
-                                                            checked={data.program?.category === group.category && data.program?.value === degree}
-                                                            onCheckedChange={(checked) => {
-                                                                handleProgramChange(group.category, degree, checked);
-                                                            }}
-                                                            className="mr-2"
-                                                        />
-                                                        <Label htmlFor={`${group.category}_${degree}`} className="text-sm">
-                                                            {degree}
-                                                        </Label>
-                                                    </div>
+                                                <div key={degree} className="flex items-center space-x-2">
+                                                    <Checkbox
+                                                        id={`${group.category}_${degree}`}
+                                                        checked={data.program_category === group.category && data.program_value === degree}
+                                                        onCheckedChange={(checked) => handleProgramChange(group.category, degree, checked)}
+                                                    />
+                                                    <Label htmlFor={`${group.category}_${degree}`} className="text-sm font-medium">{degree}</Label>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
-
                                 ))}
+                            </div>
+                            {(errors.program_category || errors.program_value) && (
+                                <p className="text-sm text-red-600 mt-2">{errors.program_category || errors.program_value}</p>
+                            )}
+                        </div>
 
-                            </BoxSection>
-
-                            {/* Personal Information */}
-                            <BoxSection
-                                title="PERSONAL INFORMATION"
-                                description="Please fill in your personal information."
-                                className='pb-0'
-                            >
-                                <div className="border border-black/30 rounded-md mb-4">
-                                    <div className="grid grid-cols-3 border-b border-black/30">
-                                        <div className="p-2 border-r border-black/30">
-                                            <Label htmlFor="name">Name of Candidate</Label>
-                                            <Input
-                                                id="name"
-                                                value={data.name}
-                                                onChange={(e) => setData('name', e.target.value)}
-                                                className="border-none focus-visible:border-none focus-visible:ring-0"
-                                            />
-                                        </div>
-                                        <div className="p-2 col-span-2">
-                                            <Label htmlFor="cell">Phone No #</Label>
-                                            <Input
-                                                id="cell"
-                                                value={data.cell}
-                                                onChange={(e) => setData('cell', e.target.value)}
-                                                className="border-none focus-visible:border-none focus-visible:ring-0"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-3 border-b border-black/30">
-                                        <div className="p-2 border-r border-black/30">
-                                            <Label htmlFor="father_name">Father's Name</Label>
-                                            <Input
-                                                id="father_name"
-                                                value={data.father_name}
-                                                onChange={(e) => setData('father_name', e.target.value)}
-                                                className="border-none focus-visible:border-none focus-visible:ring-0"
-                                            />
-                                        </div>
-                                        <div className="p-2 col-span-2">
-                                            <Label htmlFor="father_cell">Father's Phone No #</Label>
-                                            <Input
-                                                id="father_cell"
-                                                value={data.father_cell}
-                                                onChange={(e) => setData('father_cell', e.target.value)}
-                                                className="border-none focus-visible:border-none focus-visible:ring-0"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-3 border-b border-black/30">
-                                        <div className="p-2 border-r border-black/30">
-                                            <Label htmlFor="cnic">Candidate's CNIC/Bay Form No.</Label>
-                                            <Input
-                                                id="cnic"
-                                                value={data.cnic}
-                                                onChange={(e) => setData('cnic', e.target.value)}
-                                                className="border-none focus-visible:border-none focus-visible:ring-0"
-                                            />
-                                        </div>
-                                        <div className="p-2 border-r border-black/30">
-                                            <Label htmlFor="domicile">Domicile</Label>
-                                            <Input
-                                                id="domicile"
-                                                value={data.domicile}
-                                                onChange={(e) => setData('domicile', e.target.value)}
-                                                className="border-none focus-visible:border-none focus-visible:ring-0"
-                                            />
-                                        </div>
-                                        <div className="p-2">
-                                            <Label htmlFor="religion">Religion</Label>
-                                            <Input
-                                                id="religion"
-                                                value={data.religion}
-                                                onChange={(e) => setData('religion', e.target.value)}
-                                                className="border-none focus-visible:border-none focus-visible:ring-0"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-3 border-b border-black/30">
-                                        <div className="p-2 border-r border-black/30">
-                                            <Label htmlFor="dob">Date of Birth (According to S.S.C)</Label>
-                                            <Input
-                                                id="dob"
-                                                value={data.dob}
-                                                onChange={(e) => setData('dob', e.target.value)}
-                                                className="border-none focus-visible:border-none focus-visible:ring-0"
-                                            />
-                                        </div>
-                                        <div className="p-2 col-span-2">
-                                            <Label htmlFor="email">E-mail</Label>
-                                            <Input
-                                                id="email"
-                                                value={data.email}
-                                                onChange={(e) => setData('email', e.target.value)}
-                                                className="border-none focus-visible:border-none focus-visible:ring-0"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-3 border-b border-black/30">
-                                        <div className="p-2 border-r border-black/30">
-                                            <Label htmlFor="father_occupation">Father's Occupation</Label>
-                                            <Input
-                                                id="father_occupation"
-                                                value={data.father_occupation}
-                                                onChange={(e) => setData('father_occupation', e.target.value)}
-                                                className="border-none focus-visible:border-none focus-visible:ring-0"
-                                            />
-                                        </div>
-                                        <div className="p-2 col-span-2">
-                                            <Label htmlFor="father_cnic">Father's CNIC No.</Label>
-                                            <Input
-                                                id="father_cnic"
-                                                value={data.father_cnic}
-                                                onChange={(e) => setData('father_cnic', e.target.value)}
-                                                className="border-none focus-visible:border-none focus-visible:ring-0"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-3 border-b border-black/30">
-                                        <div className="p-2 border-r border-black/30">
-                                            <Label htmlFor="guardian_name">Guardian's Name</Label>
-                                            <Input
-                                                id="guardian_name"
-                                                value={data.guardian_name}
-                                                onChange={(e) => setData('guardian_name', e.target.value)}
-                                                className="border-none focus-visible:border-none focus-visible:ring-0"
-                                            />
-                                        </div>
-                                        <div className="p-2 border-r border-black/30">
-                                            <Label htmlFor="guardian_occupation">Occupation</Label>
-                                            <Input
-                                                id="guardian_occupation"
-                                                value={data.guardian_occupation}
-                                                onChange={(e) => setData('guardian_occupation', e.target.value)}
-                                                className="border-none focus-visible:border-none focus-visible:ring-0"
-                                            />
-                                        </div>
-                                        <div className="p-2">
-                                            <Label htmlFor="guardian_cell">Guardian Phone No #</Label>
-                                            <Input
-                                                id="guardian_cell"
-                                                value={data.guardian_cell}
-                                                onChange={(e) => setData('guardian_cell', e.target.value)}
-                                                className="border-none focus-visible:border-none focus-visible:ring-0"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="p-2 border-b border-black/30">
-                                        <Label htmlFor="present_address">Present Address</Label>
-                                        <Input
-                                            id="present_address"
-                                            value={data.present_address}
-                                            onChange={(e) => setData('present_address', e.target.value)}
-                                            className="border-none focus-visible:border-none focus-visible:ring-0"
-                                        />
-                                    </div>
-
-                                    <div className="p-2">
-                                        <Label htmlFor="permanent_address">Permanent Home Address</Label>
-                                        <Input
-                                            id="permanent_address"
-                                            value={data.permanent_address}
-                                            onChange={(e) => setData('permanent_address', e.target.value)}
-                                            className="border-none focus-visible:border-none focus-visible:ring-0"
-                                        />
-                                    </div>
+                        {/* Personal Information */}
+                        <div className="border-t border-gray-200 pt-6">
+                            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                                <span className={cn("w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 text-sm", { 'bg-red-100 text-red-600': errors.name || errors.cell || errors.email || errors.address })}>3</span>
+                                Personal Information
+                            </h2>
+                            <p className="text-sm text-gray-600 mb-4">Please fill in your personal information.</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8">
+                                <div className="space-y-1">
+                                    <Label htmlFor="name" className="text-sm text-gray-500 flex items-center">
+                                        <User className="h-4 w-4 mr-1" /> Name of Candidate
+                                    </Label>
+                                    <Input
+                                        id="name"
+                                        value={data.name}
+                                        onChange={(e) => setData('name', e.target.value)}
+                                        isError={errors.name}
+                                        className="h-10"
+                                        required
+                                    />
+                                    <InputError message={errors.name} className="mt-1" />
                                 </div>
-                            </BoxSection>
-
-                            {/* Subjects */}
-                            <BoxSection
-                                title="Subjects (For intermediate Classes Only)"
-                            >
-                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {interSubjects.map((subject: InterSubject) => (
-                                        <div key={subject.id} className="flex items-center">
-                                            <Label className="mr-2 text-nowrap">{subject.id})</Label>
-                                            <input
-                                                value={subject.name}
-                                                onChange={(e) => handleSubjectChange(subject.id, e.target.value)}
-                                                className={cn("h-8", {
-                                                    "border-b border-black appearance-none focus:outline-0": !subject.readOnly,
-                                                    "border-none focus:ring-0": subject.readOnly
-                                                })}
-                                                placeholder={`Subject ${subject.id}`}
-                                                readOnly={subject.readOnly}
-                                            />
-                                        </div>
-                                    ))}
+                                <div className="space-y-1">
+                                    <Label htmlFor="cell" className="text-sm text-gray-500 flex items-center">
+                                        <Phone className="h-4 w-4 mr-1" /> Mobile Number
+                                    </Label>
+                                    <Input
+                                        id="cell"
+                                        value={data.cell}
+                                        onChange={(e) => setData('cell', e.target.value)}
+                                        isError={errors.cell}
+                                        className="h-10"
+                                        required
+                                    />
+                                    <InputError message={errors.cell} className="mt-1" />
                                 </div>
-                            </BoxSection>
+                                <div className="space-y-1">
+                                    <Label htmlFor="father_name" className="text-sm text-gray-500 flex items-center">
+                                        <User className="h-4 w-4 mr-1" /> Father’s Name
+                                    </Label>
+                                    <Input
+                                        id="father_name"
+                                        value={data.father_name}
+                                        onChange={(e) => setData('father_name', e.target.value)}
+                                        isError={errors.father_name}
+                                        className="h-10"
+                                        required
+                                    />
+                                    <InputError message={errors.father_name} className="mt-1" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="father_cell" className="text-sm text-gray-500 flex items-center">
+                                        <Phone className="h-4 w-4 mr-1" /> Father’s Mobile
+                                    </Label>
+                                    <Input
+                                        id="father_cell"
+                                        value={data.father_cell}
+                                        onChange={(e) => setData('father_cell', e.target.value)}
+                                        isError={errors.father_cell}
+                                        className="h-10"
+                                        required
+                                    />
+                                    <InputError message={errors.father_cell} className="mt-1" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="cnic" className="text-sm text-gray-500 flex items-center">
+                                        <FileText className="h-4 w-4 mr-1" /> CNIC / Bay Form No.
+                                    </Label>
+                                    <Input
+                                        id="cnic"
+                                        type="text"
+                                        value={data.cnic}
+                                        onChange={(e) => {
+                                            let { value } = e.target;
+                                            if (value.includes(' ')) {
+                                                value = value.replace(' ', '');
+                                            }
 
-                            {/* Examination Details */}
-                            <BoxSection
-                                title="Examination Details"
-                                description="Please mention your examination details in the table below."
-                            >
-                                <div className="overflow-x-auto">
-                                    <table className="w-full border-collapse">
-                                        <thead>
-                                            <tr>
-                                                <th className="border border-black/30 p-1" rowSpan={2}>Examination</th>
-                                                <th className="border border-black/30 p-1" rowSpan={2}>Year</th>
-                                                <th className="border border-black/30 p-1" rowSpan={2}>Roll No.</th>
-                                                <th className="border border-black/30 p-1" rowSpan={2}>Marks</th>
-                                                <th className="border border-black/30 p-1" rowSpan={2}>%avg</th>
-                                                <th className="border border-black/30 p-1" rowSpan={2}>Subjects</th>
-                                                <th className="border border-black/30 p-1 text-center" colSpan={2}>From where passed</th>
-                                            </tr>
-                                            <tr>
-                                                <th className="border border-black/30 p-1">Board/University</th>
-                                                <th className="border border-black/30 p-1">School/College</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {/* Dynamic Rows */}
-                                            {ExaminationLevels.map((level) => {
-                                                const levelKey = level.key as keyof typeof data.examination;
-                                                const LevelData = data.examination[levelKey] as ExaminationRecord;
-                                                return (
-                                                    <tr>
-                                                        <td className="border border-black/30 p-1 font-semibold">{level.label}</td>
-                                                        <td className="border border-black/30 p-1">
-                                                            <Input
-                                                                value={LevelData.year}
-                                                                onChange={(e) => {
-                                                                    setData('examination', {
-                                                                        ...data.examination,
-                                                                        [levelKey]: {
-                                                                            ...LevelData,
-                                                                            year: e.target.value
-                                                                        }
-                                                                    });
-                                                                }}
-                                                                className="border-none h-8 focus-visible:ring-0"
-                                                            />
-                                                        </td>
-                                                        <td className="border border-black/30 p-1">
-                                                            <Input
-                                                                value={LevelData.roll_no}
-                                                                onChange={(e) => {
-                                                                    setData('examination', {
-                                                                        ...data.examination,
-                                                                        [levelKey]: {
-                                                                            ...LevelData,
-                                                                            roll_no: e.target.value
-                                                                        }
-                                                                    });
-                                                                }}
-                                                                className="border-none h-8 focus-visible:ring-0"
-                                                            />
-                                                        </td>
-                                                        <td className="border border-black/30 p-1">
-                                                            <Input
-                                                                value={LevelData.marks}
-                                                                onChange={(e) => {
-                                                                    setData('examination', {
-                                                                        ...data.examination,
-                                                                        [levelKey]: {
-                                                                            ...LevelData,
-                                                                            marks: e.target.value
-                                                                        }
-                                                                    });
-                                                                }}
-                                                                className="border-none h-8 focus-visible:ring-0"
-                                                            />
-                                                        </td>
-                                                        <td className="border border-black/30 p-1">
-                                                            <Input
-                                                                value={LevelData.percentage}
-                                                                onChange={(e) => {
-                                                                    setData('examination', {
-                                                                        ...data.examination,
-                                                                        [levelKey]: {
-                                                                            ...LevelData,
-                                                                            percentage: e.target.value
-                                                                        }
-                                                                    });
-                                                                }}
-                                                                className="border-none h-8 focus-visible:ring-0"
-                                                            />
-                                                        </td>
-                                                        <td className="border border-black/30 p-1">
-                                                            <Input
-                                                                value={LevelData.subjects}
-                                                                onChange={(e) => {
-                                                                    setData('examination', {
-                                                                        ...data.examination,
-                                                                        [levelKey]: {
-                                                                            ...LevelData,
-                                                                            subjects: e.target.value
-                                                                        }
-                                                                    });
-                                                                }}
-                                                                className="border-none h-8 focus-visible:ring-0"
-                                                            />
-                                                        </td>
-                                                        <td className="border border-black/30 p-1">
-                                                            <Input
-                                                                value={LevelData.board_university}
-                                                                onChange={(e) => {
-                                                                    setData('examination', {
-                                                                        ...data.examination,
-                                                                        [levelKey]: {
-                                                                            ...LevelData,
-                                                                            board_university: e.target.value
-                                                                        }
-                                                                    });
-                                                                }}
-                                                                className="border-none h-8 focus-visible:ring-0"
-                                                            />
-                                                        </td>
-                                                        <td className="border border-black/30 p-1">
-                                                            <Input
-                                                                value={LevelData.school_college}
-                                                                onChange={(e) => {
-                                                                    setData('examination', {
-                                                                        ...data.examination,
-                                                                        [levelKey]: {
-                                                                            ...LevelData,
-                                                                            school_college: e.target.value
-                                                                        }
-                                                                    });
-                                                                }}
-                                                                className="border-none h-8 focus-visible:ring-0"
-                                                            />
-                                                        </td>
-                                                    </tr>
-                                                )
+                                            setData('cnic', value);
+                                        }}
+                                        isError={errors.cnic}
+                                        className="h-10"
+                                        required
+                                    />
+                                    <InputError message={errors.cnic} className="mt-1" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="domicile" className="text-sm text-gray-500 flex items-center">
+                                        <MapPin className="h-4 w-4 mr-1" /> Domicile
+                                    </Label>
+                                    <Input
+                                        id="domicile"
+                                        value={data.domicile}
+                                        onChange={(e) => setData('domicile', e.target.value)}
+                                        isError={errors.domicile}
+                                        className="h-10"
+                                        required
+                                    />
+                                    <InputError message={errors.domicile} className="mt-1" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="religion" className="text-sm text-gray-500 flex items-center">
+                                        <BookOpen className="h-4 w-4 mr-1" /> Religion
+                                    </Label>
+                                    <Input
+                                        id="religion"
+                                        value={data.religion}
+                                        onChange={(e) => setData('religion', e.target.value)}
+                                        isError={errors.religion}
+                                        className="h-10"
+                                        required
+                                    />
+                                    <InputError message={errors.religion} className="mt-1" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="dob" className="text-sm text-gray-500 flex items-center">
+                                        <Calendar className="h-4 w-4 mr-1" /> Date of Birth
+                                    </Label>
+                                    <Input
+                                        id="dob"
+                                        type="date"
+                                        max={new Date().toISOString().split('T')[0]}
+                                        value={data.dob}
+                                        onChange={(e) => setData('dob', e.target.value)}
+                                        isError={errors.dob}
+                                        className="h-10"
+                                        required
+                                    />
+                                    <InputError message={errors.dob} className="mt-1" />
+                                </div>
+                                <div className="space-y-1 md:col-span-2 lg:col-span-3">
+                                    <Label htmlFor="email" className="text-sm text-gray-500 flex items-center">
+                                        <Mail className="h-4 w-4 mr-1" /> Email Address
+                                    </Label>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        value={data.email}
+                                        onChange={(e) => setData('email', e.target.value)}
+                                        isError={errors.email}
+                                        className="h-10"
+                                        required
+                                    />
+                                    <InputError message={errors.email} className="mt-1" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="father_occupation" className="text-sm text-gray-500 flex items-center">
+                                        <Briefcase className="h-4 w-4 mr-1" /> Father’s Occupation
+                                    </Label>
+                                    <Input
+                                        id="father_occupation"
+                                        value={data.father_occupation}
+                                        onChange={(e) => setData('father_occupation', e.target.value)}
+                                        isError={errors.father_occupation}
+                                        className="h-10"
+                                    />
+                                    <InputError message={errors.father_occupation} className="mt-1" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="father_cnic" className="text-sm text-gray-500 flex items-center">
+                                        <FileText className="h-4 w-4 mr-1" /> Father’s CNIC
+                                    </Label>
+                                    <Input
+                                        id="father_cnic"
+                                        value={data.father_cnic}
+                                        onChange={(e) => {
+                                            let { value } = e.target;
+                                            if (value.includes(' ')) {
+                                                value = value.replace(' ', '');
+                                            }
+
+                                            setData('father_cnic', value);
+                                        }}
+                                        isError={errors.father_cnic}
+                                        className="h-10"
+                                    />
+                                    <InputError message={errors.father_cnic} className="mt-1" />
+                                </div>
+                                <div className="space-y-1 md:col-span-2 lg:col-span-3 border-t border-gray-100 pt-4 mt-2">
+                                    <p className="text-sm font-medium text-gray-700 flex items-center">
+                                        <UserPlus className="h-4 w-4 mr-1" /> Guardian Information (Optional)
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="guardian_name" className="text-sm text-gray-500 flex items-center">
+                                        <User className="h-4 w-4 mr-1" /> Guardian Name
+                                    </Label>
+                                    <Input
+                                        id="guardian_name"
+                                        value={data.guardian_name}
+                                        onChange={(e) => setData('guardian_name', e.target.value)}
+                                        isError={errors.guardian_name}
+                                        className="h-10"
+                                    />
+                                    <InputError message={errors.guardian_name} className="mt-1" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="guardian_occupation" className="text-sm text-gray-500 flex items-center">
+                                        <Briefcase className="h-4 w-4 mr-1" /> Guardian Occupation
+                                    </Label>
+                                    <Input
+                                        id="guardian_occupation"
+                                        value={data.guardian_occupation}
+                                        onChange={(e) => setData('guardian_occupation', e.target.value)}
+                                        isError={errors.guardian_occupation}
+                                        className="h-10"
+                                    />
+                                    <InputError message={errors.guardian_occupation} className="mt-1" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="guardian_cell" className="text-sm text-gray-500 flex items-center">
+                                        <Phone className="h-4 w-4 mr-1" /> Guardian Mobile
+                                    </Label>
+                                    <Input
+                                        id="guardian_cell"
+                                        value={data.guardian_cell}
+                                        onChange={(e) => setData('guardian_cell', e.target.value)}
+                                        isError={errors.guardian_cell}
+                                        className="h-10"
+                                    />
+                                    <InputError message={errors.guardian_cell} className="mt-1" />
+                                </div>
+                                <div className="space-y-1 md:col-span-2 lg:col-span-3">
+                                    <Label htmlFor="present_address" className="text-sm text-gray-500 flex items-center">
+                                        <Home className="h-4 w-4 mr-1" /> Present Address
+                                    </Label>
+                                    <Input
+                                        id="present_address"
+                                        value={data.present_address}
+                                        onChange={(e) => setData('present_address', e.target.value)}
+                                        isError={errors.present_address}
+                                        className="h-10"
+                                        required
+                                    />
+                                    <InputError message={errors.present_address} className="mt-1" />
+                                </div>
+                                <div className="space-y-1 md:col-span-2 lg:col-span-3">
+                                    <Label htmlFor="permanent_address" className="text-sm text-gray-500 flex items-center">
+                                        <Home className="h-4 w-4 mr-1" /> Permanent Address
+                                    </Label>
+                                    <Input
+                                        id="permanent_address"
+                                        value={data.permanent_address}
+                                        onChange={(e) => setData('permanent_address', e.target.value)}
+                                        isError={errors.permanent_address}
+                                        className="h-10"
+                                        required
+                                    />
+                                    <InputError message={errors.permanent_address} className="mt-1" />
+                                </div>
+                            </div>
+                            {(errors.name || errors.cell || errors.email) && (
+                                <p className="text-sm text-red-600 mt-2">{errors.name || errors.cell || errors.email}</p>
+                            )}
+                        </div>
+
+                        {/* Subjects */}
+                        <div className="border-t border-gray-200 pt-6">
+                            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                                <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 text-sm">4</span>
+                                Subjects (For Intermediate Classes Only)
+                            </h2>
+                            <p className="text-sm text-gray-600 mb-4">Enter subjects if applying for an intermediate program.</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                {interSubjects.map((subject: InterSubject) => (
+                                    <div key={subject.id} className="flex items-center space-x-2">
+                                        <Label className="text-sm text-gray-500 flex items-center text-nowrap">
+                                            <BookOpen className="h-4 w-4 mr-1" /> Subject {subject.id}
+                                        </Label>
+                                        <Input
+                                            value={subject.name}
+                                            onChange={(e) => handleSubjectChange(subject.id, e.target.value)}
+                                            className={cn('h-10', {
+                                                'border-b border-black appearance-none focus:outline-0': !subject.readOnly,
+                                                'border-none focus:ring-0': subject.readOnly,
                                             })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </BoxSection>
+                                            placeholder={`Subject ${subject.id}`}
+                                            readOnly={subject.readOnly}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            {errors.inter_subjects && <p className="text-sm text-red-600 mt-2">{errors.inter_subjects}</p>}
+                        </div>
 
-                            {/* Form submit button */}
-                            <div className="flex items-center justify-end mt-4">
-                                <Button className="ml-4" variant='destructive' disabled={processing}>
-                                    {processing && (
-                                        <span className="flex items-center">
-                                            <Loader2 className="mr-3 h-4 w-4 animate-spin" />
-                                        </span>
-                                    )}
-                                    Submit
+                        {/* Examination Details */}
+                        <div className="border-t border-gray-200 pt-6">
+                            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                                <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 text-sm">5</span>
+                                Examination Details
+                            </h2>
+                            <p className="text-sm text-gray-600 mb-4">Provide your examination details below.</p>
+                            <div className="space-y-6">
+                                {ExaminationLevels.map((level) => {
+                                    const levelKey = level.key as keyof typeof data.examination;
+                                    const LevelData = data.examination[levelKey] as ExaminationRecord;
+                                    return (
+                                        <div key={levelKey} className="bg-gray-50 border border-gray-200 rounded-md p-4">
+                                            <h3 className="text-lg font-medium text-gray-700 mb-3 flex items-center">
+                                                <School className="h-4 w-4 mr-1" /> {level.label}
+                                            </h3>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8">
+                                                <div className="space-y-1">
+                                                    <Label htmlFor={`${levelKey}_year`} className="text-sm text-gray-500 flex items-center">
+                                                        <Calendar className="h-4 w-4 mr-1" /> Year
+                                                    </Label>
+                                                    <Input
+                                                        id={`${levelKey}_year`}
+                                                        min={2000}
+                                                        max={new Date().getFullYear()}
+                                                        type="number"
+                                                        value={LevelData.year}
+                                                        onChange={(e) =>
+                                                            setData('examination', {
+                                                                ...data.examination,
+                                                                [levelKey]: { ...LevelData, year: e.target.value },
+                                                            })
+                                                        }
+                                                        className="h-10"
+                                                        hideCaret
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label htmlFor={`${levelKey}_roll_no`} className="text-sm text-gray-500 flex items-center">
+                                                        <FileText className="h-4 w-4 mr-1" /> Roll No.
+                                                    </Label>
+                                                    <Input
+                                                        id={`${levelKey}_roll_no`}
+                                                        name={`${levelKey}_roll_no`}
+                                                        value={LevelData.roll_no}
+                                                        type='number'
+                                                        onChange={(e) =>
+                                                            setData('examination', {
+                                                                ...data.examination,
+                                                                [levelKey]: { ...LevelData, roll_no: e.target.value },
+                                                            })
+                                                        }
+                                                        className="h-10"
+                                                        hideCaret
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label htmlFor={`${levelKey}_marks`} className="text-sm text-gray-500 flex items-center">
+                                                        <BookOpen className="h-4 w-4 mr-1" /> Marks
+                                                    </Label>
+                                                    <Input
+                                                        id={`${levelKey}_marks`}
+                                                        min={100}
+                                                        max={5000}
+                                                        type="number"
+                                                        value={LevelData.marks}
+                                                        onChange={(e) =>
+                                                            setData('examination', {
+                                                                ...data.examination,
+                                                                [levelKey]: { ...LevelData, marks: e.target.value },
+                                                            })
+                                                        }
+                                                        className="h-10"
+                                                        hideCaret
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label htmlFor={`${levelKey}_percentage`} className="text-sm text-gray-500 flex items-center">
+                                                        <Percent className="h-4 w-4 mr-1" /> Percentage
+                                                    </Label>
+                                                    <Input
+                                                        id={`${levelKey}_percentage`}
+                                                        min={1}
+                                                        max={100}
+                                                        step="0.1"
+                                                        type="number"
+                                                        value={LevelData.percentage}
+                                                        onChange={(e) =>
+                                                            setData('examination', {
+                                                                ...data.examination,
+                                                                [levelKey]: { ...LevelData, percentage: e.target.value },
+                                                            })
+                                                        }
+                                                        className="h-10"
+                                                        hideCaret
+                                                    />
+                                                </div>
+                                                <div className="space-y-1 md:col-span-2">
+                                                    <Label htmlFor={`${levelKey}_subjects`} className="text-sm text-gray-500 flex items-center">
+                                                        <BookOpen className="h-4 w-4 mr-1" /> Subjects
+                                                    </Label>
+                                                    <Input
+                                                        id={`${levelKey}_subjects`}
+                                                        value={LevelData.subjects}
+                                                        onChange={(e) =>
+                                                            setData('examination', {
+                                                                ...data.examination,
+                                                                [levelKey]: { ...LevelData, subjects: e.target.value },
+                                                            })
+                                                        }
+                                                        className="h-10"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label htmlFor={`${levelKey}_board_university`} className="text-sm text-gray-500 flex items-center">
+                                                        <School className="h-4 w-4 mr-1" /> Board/University
+                                                    </Label>
+                                                    <Input
+                                                        id={`${levelKey}_board_university`}
+                                                        value={LevelData.board_university}
+                                                        onChange={(e) =>
+                                                            setData('examination', {
+                                                                ...data.examination,
+                                                                [levelKey]: { ...LevelData, board_university: e.target.value },
+                                                            })
+                                                        }
+                                                        className="h-10"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label htmlFor={`${levelKey}_school_college`} className="text-sm text-gray-500 flex items-center">
+                                                        <School className="h-4 w-4 mr-1" /> School/College
+                                                    </Label>
+                                                    <Input
+                                                        id={`${levelKey}_school_college`}
+                                                        value={LevelData.school_college}
+                                                        onChange={(e) =>
+                                                            setData('examination', {
+                                                                ...data.examination,
+                                                                [levelKey]: { ...LevelData, school_college: e.target.value },
+                                                            })
+                                                        }
+                                                        className="h-10"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Notes and Submit */}
+                        <div className="mt-8 border-t border-gray-200 pt-6">
+                            <div className="mb-6 p-4 bg-red-100 border border-red-400 rounded-md">
+                                <h3 className="text-lg font-semibold text-red-800 flex items-center">
+                                    <AlertCircle className="h-5 w-5 mr-2" /> Important Notes:
+                                </h3>
+                                <ul className="list-disc list-inside text-red-900 text-sm">
+                                    <li>
+                                        Once submitted, this form <strong>cannot be changed</strong>. Please review all details carefully.
+                                    </li>
+                                    <li>Ensure all information, including examination details and program selection, is accurate.</li>
+                                    <li>Multiple submissions with the same CNIC, shift, and program combination are not allowed.</li>
+                                    <li>
+                                        Contact support at{' '}
+                                        <a href="mailto:support@example.com" className="underline">
+                                            support@example.com
+                                        </a>{' '}
+                                        if you need assistance.
+                                    </li>
+                                </ul>
+                            </div>
+                            <div className="flex justify-end print:hidden">
+                                <Button
+                                    variant="destructive"
+                                    disabled={processing}
+                                    className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2 px-6 py-2"
+                                >
+                                    {processing && <Loader2 className="h-4 w-4 animate-spin" />}
+                                    Submit Form
                                 </Button>
                             </div>
-                        </form>
-                    </div>
-                </Card>
+                        </div>
+                    </form>
+                </div>
             </div>
-
-            <Toaster position='top-center' />
-        </>
+        </AdmissionFormLayout>
     );
 }
 

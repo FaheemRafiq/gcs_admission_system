@@ -1,18 +1,15 @@
 <?php
 
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdmissionFormController;
 
-Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
-
-Route::get('/admission-form', [AdmissionFormController::class, 'index'])->name('admission-form.index');
+Route::get('/', [AdmissionFormController::class, 'index'])->name('admission-form.index');
 Route::post('/admission-form', [AdmissionFormController::class, 'store'])->name('admission-form.store');
+Route::get('/admission-form/{form_data}/success', [AdmissionFormController::class, 'success'])->name('admission-form.success');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/admission-form/{id}', [AdmissionFormController::class, 'show'])->name('admission-form.show');
+    Route::post('/admission-form/{id}/status', [AdmissionFormController::class, 'updateStatus'])->name('admission-form.update-status');
 });

@@ -13,6 +13,8 @@ class AdmissionForm extends Model
 
     protected $fillable = [
         'shift',
+        'diary_no',
+        'college_roll_no',
         'program_category',
         'program_value',
         'name',
@@ -33,6 +35,7 @@ class AdmissionForm extends Model
         'permanent_address',
         'inter_subjects',
         'photo_path',
+        'status'
     ];
 
     protected $casts = [
@@ -40,7 +43,14 @@ class AdmissionForm extends Model
         'dob'            => 'date',
     ];
 
+    public const STATUSES = ['pending', 'approved', 'rejected'];
+
     public const SHIFTS = ['Morning', 'Evening'];
+
+    public function getPhotoPathAttribute($value)
+    {
+        return asset('storage/' . $value);
+    }
 
     // Relationship with examinations
     public function examinations(): HasMany

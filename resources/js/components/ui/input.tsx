@@ -3,10 +3,11 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 interface InputProps extends React.ComponentProps<"input"> {
-  isError?: boolean | string
+  isError?: boolean | string,
+  hideCaret?: boolean
 }
 
-function Input({ className, isError = false, type, ...props }: InputProps) {
+function Input({ className, isError = false, hideCaret = false, type, ...props }: InputProps) {
   return (
     <input
       type={type}
@@ -18,6 +19,7 @@ function Input({ className, isError = false, type, ...props }: InputProps) {
         className,
         {
           "border-destructive text-destructive focus-visible:ring-destructive/20": isError,
+          "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" : hideCaret
         }
       )}
       {...props}

@@ -10,6 +10,9 @@ return new class extends Migration
     {
         Schema::create('admission_forms', function (Blueprint $table) {
             $table->id('form_no'); // Primary key
+            $table->string('diary_no')->nullable();
+            $table->string('college_roll_no')->nullable();
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->string('shift'); // Morning or Evening
             $table->string('program_category'); // e.g., intermediate, bs, semester_5, associate
             $table->string('program_value'); // e.g., F.Sc.Pre-Med, Chemistry, etc.
@@ -29,7 +32,7 @@ return new class extends Migration
             $table->string('guardian_cell')->nullable();
             $table->text('present_address');
             $table->text('permanent_address');
-            $table->json('inter_subjects');
+            $table->json('inter_subjects')->nullable();
             $table->string('photo_path');
             $table->timestamps();
 
