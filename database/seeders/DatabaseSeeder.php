@@ -5,6 +5,7 @@ namespace Database\Seeders;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\Examination;
 use App\Models\AdmissionForm;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,23 +15,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create 50 Admission Forms
-        AdmissionForm::factory()
-            ->count(50)
-            ->create()
-            ->each(function ($form) {
-                // Define possible examination levels
-                $examLevels = ['Matric', 'Intermediate', 'Associate Degree'];
-                // Randomly select 1-3 levels for this form
-                $selectedLevels = fake()->randomElements($examLevels, fake()->numberBetween(1, 3));
-
-                // Create an examination for each selected level
-                foreach ($selectedLevels as $level) {
-                    Examination::factory()->create([
-                        'admission_form_id' => $form->form_no,
-                        'name'              => $level,
-                    ]);
-                }
-            });
+        User::factory()
+            ->password('asdf1234')
+            ->create([
+                'name' => 'Admin',
+                'email' => 'admin@gmail.com',    
+            ]);
     }
 }

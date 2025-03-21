@@ -1,5 +1,5 @@
 import { cva } from "class-variance-authority";
-import { BadgeAlertIcon, CircleAlertIcon } from "lucide-react";
+import { CircleAlertIcon } from "lucide-react";
 import React, { ReactNode } from "react";
 
 interface BoxSectionProps {

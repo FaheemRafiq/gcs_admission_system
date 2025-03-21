@@ -1,15 +1,16 @@
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import { type AdmissionForm } from '@/types/database';
 import { User } from 'lucide-react';
 import { usePage } from '@inertiajs/react';
 import { motion, AnimatePresence } from "framer-motion";
+import { SharedData } from '@/types';
 
 interface Props {
     form: AdmissionForm;
 }
 
 const AdmissionFormView: React.FC<Props> = ({ form }) => {
-    const { auth } = usePage().props as any; // Access auth from Inertia page props
+    const { auth } = usePage<SharedData>().props; // Access auth from Inertia page props
     const [isPhotoOpen, setIsPhotoOpen] = useState(false);
 
     // Parse inter_subjects if it's a string
@@ -28,6 +29,7 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
                 day: 'numeric',
             });
         } catch (e) {
+            console.log("Error parsing date:", e);
             return dateString; // Return as is if not parseable
         }
     };

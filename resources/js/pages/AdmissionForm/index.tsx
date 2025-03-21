@@ -47,7 +47,7 @@ interface ExaminationRecord {
     school_college: string;
 }
 
-interface FormData {
+type FormData = {
     shift: string;
     program_category: string;
     program_value: string;
@@ -74,7 +74,7 @@ interface FormData {
         associate: ExaminationRecord;
     };
     photo: File | null;
-    [key: string]: any
+    [key: string]: any;
 }
 
 const ExaminationLevels = [
