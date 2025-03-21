@@ -3,7 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CheckCircle2, Printer } from 'lucide-react';
 import { type AdmissionForm } from '@/types/database';
-import AdmissionFormLayout from '@/layouts/admission-form-layout';
+import AdmissionFormLayout from '@/layouts/MainLayout';
 import AdmissionFormView from '@/components/admission-form-view';
 
 interface Props {

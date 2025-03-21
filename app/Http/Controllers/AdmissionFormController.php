@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
-use App\Models\AdmissionForm;
-use App\Http\Requests\StoreAdmissionFormRequest;
 use Illuminate\Http\Request;
+use App\Models\AdmissionForm;
 use Illuminate\Validation\Rule;
+use App\Http\Requests\StoreAdmissionFormRequest;
 
 class AdmissionFormController extends Controller
 {
@@ -39,8 +39,8 @@ class AdmissionFormController extends Controller
 
             // Ensure inter_subjects is stored as JSON
             $data['inter_subjects'] = json_encode($data['inter_subjects']);
-            
-            if($data['program_category'] !== config('programs.groups.0.category')) {
+
+            if ($data['program_category'] !== config('programs.groups.0.category')) {
                 unset($data['inter_subjects']);
             }
 
@@ -49,6 +49,7 @@ class AdmissionFormController extends Controller
 
             // Store examination records
             $resultsRequired = collect(config('programs.groups'))->where('category', $data['program_category'])->first()['results_required'];
+
             foreach ($examinationData as $details) {
                 if ($this->examinationShouldStore($details, $resultsRequired)) {
                     $admissionForm->examinations()->create([
@@ -74,7 +75,7 @@ class AdmissionFormController extends Controller
         }
     }
 
-    private function examinationShouldStore($examination, $resultsRequired) 
+    private function examinationShouldStore($examination, $resultsRequired)
     {
         return array_filter($examination) && array_filter($resultsRequired, function ($value) use ($examination) {
             return $value && $examination['name'] && str_contains(strtolower($examination['name']), strtolower($value));
@@ -112,6 +113,6 @@ class AdmissionFormController extends Controller
         $form = AdmissionForm::findOrFail($id);
         $form->update(['status' => $request->status]);
 
-        return redirect()->route('dashboard')->with('success', 'Form status updated successfully.');
+        return back()->with('success', 'Form status updated successfully.');
     }
 }

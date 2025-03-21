@@ -137,6 +137,7 @@ class StoreAdmissionFormRequest extends FormRequest
             'examination.associate.required'      => 'Associate Degree examination details are required for this program.',
             'examination.associate.marks'         => 'Associate Degree examination marks are required for this program.',
             'examination.associate.percentage'    => 'Associate Degree examination percentage is required for this program.',
+            'photo.max'                           => 'Photo should be less then 2MB.',
         ];
     }
 

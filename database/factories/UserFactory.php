@@ -32,6 +32,13 @@ class UserFactory extends Factory
         ];
     }
 
+    public function password($password)
+    {
+        return $this->state(fn (array $attributes) => [
+            'password' => Hash::make($password),
+        ]);
+    }
+
     /**
      * Indicate that the model's email address should be unverified.
      */

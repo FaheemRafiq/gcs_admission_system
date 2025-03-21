@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import GcsLogoSvg from '@/assets/Logo.svg';
 import { cn } from '@/lib/utils';
 import { CheckedState } from '@radix-ui/react-checkbox';
 import toast from 'react-hot-toast';
-import AdmissionFormLayout from '@/layouts/admission-form-layout';
+import AdmissionFormLayout from '@/layouts/MainLayout';
 import { AxiosWrapper } from '@/lib/fetchWrapper';
 import {
     Loader2,
@@ -95,9 +95,13 @@ interface AdmissionFormProps {
 }
 
 const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
+    // Global
+    const { updateAppearance } = useAppearance();
+
+    // Local
     const [processing, setProcessing] = useState(false);
     const [errors, setErrors] = useState<Partial<FormData>>({});
-    const { updateAppearance } = useAppearance();
+    const formRef = useRef<HTMLFormElement>(null);
     const [interSubjects, setInterSubjects] = useState<InterSubject[]>([
         { id: 1, name: 'English', readOnly: true },
         { id: 2, name: 'Urdu', readOnly: true },
@@ -172,8 +176,11 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
         e.preventDefault();
 
         if (!data.photo) {
-            toast.error('Please upload a photo');
-            window.scrollTo(0, 0);
+            toast.error('Please attach one recent Photograph (2" x 1.5") with blue background');
+            window.scroll({
+                top: 0,
+                behavior: 'smooth',
+            });
             return;
         }
 
@@ -203,15 +210,27 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                 if (response.data.redirectUrl) {
                     setTimeout(() => {
                         window.location.href = response.data.redirectUrl;
-                    }, 1000);
+                    }, 500);
                 }
             })
             .catch((error) => {
-                if (error.response.status === 422 && error.response.data.errors) {
-                    setErrors(error.response.data.errors);
+                if (error.response?.status === 422 && error.response?.data?.errors) {
+                    const validationErrors: Record<string, string[]> = error.response.data.errors;
+                    setErrors(validationErrors);
+
+                    if (formRef.current) {
+                        for (const key of Object.keys(validationErrors)) {
+                            const element = formRef.current.querySelector<HTMLInputElement>(`[id="${key}"]`);
+                            if (element) {
+                                element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" }); 
+                                setTimeout(() => element.focus(), 500);
+                                break;
+                            }
+                        }
+                    }
                 }
 
-                if (error.response.data.message) {
+                if (error.response?.data?.message) {
                     toast.error(error.response.data.message);
                 }
             })
@@ -253,7 +272,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
         <AdmissionFormLayout>
             <div className="bg-gray-50 flex items-center justify-center p-4 sm:p-6 md:p-8 print:p-0 print:bg-white">
                 <Head title="Admission Form" />
-                <div className="max-w-7xl w-full bg-white shadow-lg rounded-lg p-6 sm:p-8 print:shadow-none print:p-4">
+                <div className="max-w-7xl w-full bg-card text-card-foreground shadow-lg rounded-lg p-6 sm:p-8 print:shadow-none print:p-4">
                     {/* Header */}
                     <div className="flex flex-col items-center justify-center">
                         <div className="flex flex-col lg:flex-row items-center justify-between w-full mb-4">
@@ -282,11 +301,13 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                             </div>
 
                             {/* Photo Upload */}
-                            <div className="relative w-32 h-40 sm:w-36 sm:h-44 border border-gray-300 rounded-md flex items-center justify-center shrink-0">
+                            <div className={cn("relative w-32 h-40 sm:w-36 sm:h-44 border border-gray-30 rounded-md flex items-center justify-center shrink-0", {
+                                'border-destructive text-destructive': errors.photo
+                            })}>
                                 {data.photo ? (
                                     <img src={URL.createObjectURL(data.photo)} alt="Uploaded Photo" className="w-full h-full object-cover rounded-md" />
                                 ) : (
-                                    <p className="text-xs text-gray-500 text-center px-2">
+                                    <p className="text-xs text-center px-2">
                                         Attach one recent Photograph (2" x 1.5") with blue background
                                     </p>
                                 )}
@@ -302,38 +323,38 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                     </div>
 
                     {/* Form */}
-                    <form onSubmit={handleSubmit} className="space-y-8">
+                    <form onSubmit={handleSubmit} className="space-y-8" ref={formRef}>
                         {/* Shift */}
-                        <div className="border-t border-gray-200 pt-6">
+                        <div className="border-t border-border pt-6">
                             <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                                <span className={cn("w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 text-sm", { 'bg-red-100 text-red-600': errors.shift })}>1</span>
+                                <span className={cn("w-8 h-8 rounded-full bg-cyan-foreground text-secondary-foreground flex items-center justify-center mr-2 text-sm", { 'bg-red-100 text-red-600': errors.shift })}>1</span>
                                 Shift Selection
                             </h2>
                             <p className="text-sm text-gray-600 mb-4">Select your preferred shift.</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {shifts.map((shift) => (
-                                    <div key={shift} className="flex items-center space-x-2">
+                                    <Label htmlFor={`shift_${shift}`} key={shift} className="flex items-center space-x-2">
                                         <Checkbox
                                             id={`shift_${shift}`}
                                             checked={data.shift === shift}
                                             onCheckedChange={(checked) => setData('shift', checked ? shift as 'Morning' | 'Evening' : '')}
                                         />
-                                        <Label htmlFor={`shift_${shift}`} className="text-sm font-medium flex items-center">
+                                        <span className="text-sm font-medium flex items-center">
                                             <Clock className="h-4 w-4 mr-1" /> {shift}
-                                        </Label>
-                                    </div>
+                                        </span>
+                                    </Label>
                                 ))}
                             </div>
-                            {errors.shift && <p className="text-sm text-red-600 mt-2">{errors.shift}</p>}
+                            {errors.shift && <p className="text-sm text-destructive mt-2">{errors.shift}</p>}
                         </div>
 
                         {/* Program Selection */}
-                        <div className="border-t border-gray-200 pt-6">
+                        <div className="border-t border-border pt-6">
                             <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                                <span className={cn("w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 text-sm", { 'bg-red-100 text-red-600': errors.program_category || errors.program_value })}>2</span>
+                                <span className={cn("w-8 h-8 rounded-full bg-cyan-foreground text-secondary-foreground flex items-center justify-center mr-2 text-sm", { 'bg-red-100 text-red-600': errors.program_category || errors.program_value })}>2</span>
                                 Program Selection
                             </h2>
-                            <p className="text-sm text-red-600 mb-4">
+                            <p className="text-sm text-destructive mb-4">
                                 Please select only one program. Submit a separate form for each additional program.
                             </p>
                             <div className="space-y-6">
@@ -344,28 +365,28 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                         </h3>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                             {group.options.map((degree) => (
-                                                <div key={degree} className="flex items-center space-x-2">
+                                                <Label htmlFor={`${group.category}_${degree}`} key={degree} className="flex items-center space-x-2">
                                                     <Checkbox
                                                         id={`${group.category}_${degree}`}
                                                         checked={data.program_category === group.category && data.program_value === degree}
                                                         onCheckedChange={(checked) => handleProgramChange(group.category, degree, checked)}
                                                     />
-                                                    <Label htmlFor={`${group.category}_${degree}`} className="text-sm font-medium">{degree}</Label>
-                                                </div>
+                                                    <span className="text-sm font-medium">{degree}</span>
+                                                </Label>
                                             ))}
                                         </div>
                                     </div>
                                 ))}
                             </div>
                             {(errors.program_category || errors.program_value) && (
-                                <p className="text-sm text-red-600 mt-2">{errors.program_category || errors.program_value}</p>
+                                <p className="text-sm text-destructive mt-2">{errors.program_category || errors.program_value}</p>
                             )}
                         </div>
 
                         {/* Personal Information */}
-                        <div className="border-t border-gray-200 pt-6">
+                        <div className="border-t border-border pt-6">
                             <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                                <span className={cn("w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 text-sm", { 'bg-red-100 text-red-600': errors.name || errors.cell || errors.email || errors.address })}>3</span>
+                                <span className={cn("w-8 h-8 rounded-full bg-cyan-foreground text-secondary-foreground flex items-center justify-center mr-2 text-sm", { 'bg-red-100 text-red-600': errors.name || errors.cell || errors.email || errors.address })}>3</span>
                                 Personal Information
                             </h2>
                             <p className="text-sm text-gray-600 mb-4">Please fill in your personal information.</p>
@@ -614,14 +635,14 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                 </div>
                             </div>
                             {(errors.name || errors.cell || errors.email) && (
-                                <p className="text-sm text-red-600 mt-2">{errors.name || errors.cell || errors.email}</p>
+                                <p className="text-sm text-destructive mt-2">{errors.name || errors.cell || errors.email}</p>
                             )}
                         </div>
 
                         {/* Subjects */}
-                        <div className="border-t border-gray-200 pt-6">
+                        <div className="border-t border-border pt-6">
                             <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                                <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 text-sm">4</span>
+                                <span className="w-8 h-8 rounded-full bg-cyan-foreground text-secondary-foreground flex items-center justify-center mr-2 text-sm">4</span>
                                 Subjects (For Intermediate Classes Only)
                             </h2>
                             <p className="text-sm text-gray-600 mb-4">Enter subjects if applying for an intermediate program.</p>
@@ -635,7 +656,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                             value={subject.name}
                                             onChange={(e) => handleSubjectChange(subject.id, e.target.value)}
                                             className={cn('h-10', {
-                                                'border-b border-black appearance-none focus:outline-0': !subject.readOnly,
+                                                'border-b border-border appearance-none focus:outline-0': !subject.readOnly,
                                                 'border-none focus:ring-0': subject.readOnly,
                                             })}
                                             placeholder={`Subject ${subject.id}`}
@@ -644,13 +665,13 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                     </div>
                                 ))}
                             </div>
-                            {errors.inter_subjects && <p className="text-sm text-red-600 mt-2">{errors.inter_subjects}</p>}
+                            {errors.inter_subjects && <p className="text-sm text-destructive mt-2">{errors.inter_subjects}</p>}
                         </div>
 
                         {/* Examination Details */}
-                        <div className="border-t border-gray-200 pt-6">
+                        <div className="border-t border-border pt-6">
                             <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                                <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 text-sm">5</span>
+                                <span className="w-8 h-8 rounded-full bg-cyan-foreground flex items-center justify-center mr-2 text-sm">5</span>
                                 Examination Details
                             </h2>
                             <p className="text-sm text-gray-600 mb-4">Provide your examination details below.</p>
@@ -685,7 +706,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <Label htmlFor={`${levelKey}_roll_no`} className="text-sm text-gray-500 flex items-center">
+                                                    <Label htmlFor={`${levelKey}_roll_no`} className="text-sm text-secondary-foreground/50 flex items-center">
                                                         <FileText className="h-4 w-4 mr-1" /> Roll No.
                                                     </Label>
                                                     <Input
@@ -704,7 +725,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <Label htmlFor={`${levelKey}_marks`} className="text-sm text-gray-500 flex items-center">
+                                                    <Label htmlFor={`${levelKey}_marks`} className="text-sm text-secondary-foreground/50 flex items-center">
                                                         <BookOpen className="h-4 w-4 mr-1" /> Marks
                                                     </Label>
                                                     <Input
@@ -724,7 +745,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <Label htmlFor={`${levelKey}_percentage`} className="text-sm text-gray-500 flex items-center">
+                                                    <Label htmlFor={`${levelKey}_percentage`} className="text-sm text-secondary-foreground/50 flex items-center">
                                                         <Percent className="h-4 w-4 mr-1" /> Percentage
                                                     </Label>
                                                     <Input
@@ -745,7 +766,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1 md:col-span-2">
-                                                    <Label htmlFor={`${levelKey}_subjects`} className="text-sm text-gray-500 flex items-center">
+                                                    <Label htmlFor={`${levelKey}_subjects`} className="text-sm text-secondary-foreground/50 flex items-center">
                                                         <BookOpen className="h-4 w-4 mr-1" /> Subjects
                                                     </Label>
                                                     <Input
@@ -761,7 +782,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <Label htmlFor={`${levelKey}_board_university`} className="text-sm text-gray-500 flex items-center">
+                                                    <Label htmlFor={`${levelKey}_board_university`} className="text-sm text-secondary-foreground/50 flex items-center">
                                                         <School className="h-4 w-4 mr-1" /> Board/University
                                                     </Label>
                                                     <Input
@@ -777,7 +798,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <Label htmlFor={`${levelKey}_school_college`} className="text-sm text-gray-500 flex items-center">
+                                                    <Label htmlFor={`${levelKey}_school_college`} className="text-sm text-secondary-foreground/50 flex items-center">
                                                         <School className="h-4 w-4 mr-1" /> School/College
                                                     </Label>
                                                     <Input
@@ -800,12 +821,12 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                         </div>
 
                         {/* Notes and Submit */}
-                        <div className="mt-8 border-t border-gray-200 pt-6">
-                            <div className="mb-6 p-4 bg-red-100 border border-red-400 rounded-md">
-                                <h3 className="text-lg font-semibold text-red-800 flex items-center">
+                        <div className="mt-8 border-t border-border pt-6">
+                            <div className="mb-6 p-4 bg-destructive/10 border border-destructive rounded-md">
+                                <h3 className="text-lg font-semibold text-destructive/80 flex items-center">
                                     <AlertCircle className="h-5 w-5 mr-2" /> Important Notes:
                                 </h3>
-                                <ul className="list-disc list-inside text-red-900 text-sm">
+                                <ul className="list-disc list-inside text-destructive/90 text-sm">
                                     <li>
                                         Once submitted, this form <strong>cannot be changed</strong>. Please review all details carefully.
                                     </li>
@@ -822,9 +843,9 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                             </div>
                             <div className="flex justify-end print:hidden">
                                 <Button
-                                    variant="destructive"
+                                    variant={'destructive'}
                                     disabled={processing}
-                                    className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2 px-6 py-2"
+                                    className="flex items-center gap-2 px-6 py-2"
                                 >
                                     {processing && <Loader2 className="h-4 w-4 animate-spin" />}
                                     Submit Form

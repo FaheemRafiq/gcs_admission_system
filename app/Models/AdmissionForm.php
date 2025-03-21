@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class AdmissionForm extends Model
 {
+    use HasFactory;
+
     protected $primaryKey = 'form_no';
 
     public $incrementing = true;
@@ -35,7 +38,7 @@ class AdmissionForm extends Model
         'permanent_address',
         'inter_subjects',
         'photo_path',
-        'status'
+        'status',
     ];
 
     protected $casts = [
@@ -49,7 +52,7 @@ class AdmissionForm extends Model
 
     public function getPhotoPathAttribute($value)
     {
-        return asset('storage/' . $value);
+        return asset('storage/'.$value);
     }
 
     // Relationship with examinations

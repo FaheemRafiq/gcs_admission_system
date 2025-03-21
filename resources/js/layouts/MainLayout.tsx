@@ -3,11 +3,11 @@ import { usePage } from '@inertiajs/react';
 import { useEffect, type ReactNode } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 
-interface AppLayoutProps {
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
     children: ReactNode;
 }
 
-export default ({ children, ...props }: AppLayoutProps) => {
+export default function MainLayout({ children, ...props } : Props){
     const { flash } = usePage<SharedData>().props;
 
     useEffect(() => { 

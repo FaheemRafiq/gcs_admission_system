@@ -1,10 +1,17 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { type AdmissionForm } from '@/types/database';
+import { User } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
+import { motion, AnimatePresence } from "framer-motion";
+
 interface Props {
     form: AdmissionForm;
 }
 
 const AdmissionFormView: React.FC<Props> = ({ form }) => {
+    const { auth } = usePage().props as any; // Access auth from Inertia page props
+    const [isPhotoOpen, setIsPhotoOpen] = useState(false);
+
     // Parse inter_subjects if it's a string
     const interSubjects = typeof form.inter_subjects === 'string'
         ? JSON.parse(form.inter_subjects).filter(Boolean)
@@ -18,7 +25,7 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
             return date.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
-                day: 'numeric'
+                day: 'numeric',
             });
         } catch (e) {
             return dateString; // Return as is if not parseable
@@ -40,10 +47,34 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
                 {/* Basic Info */}
                 <div className="border-t border-border pt-6">
                     <h2 className="text-xl font-semibold mb-4 flex items-center">
-                        <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 text-sm flex-shrink-0">1</span>
+                        <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-cyan-foreground flex items-center justify-center mr-2 text-sm flex-shrink-0">1</span>
                         <span>Applicant Information</span>
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6 sm:gap-x-8">
+                        {/* Photo - Only show if authenticated */}
+                        {auth.user && (
+                            <div className="space-y-1 sm:col-span-2 lg:col-span-1 flex justify-center lg:justify-start">
+                                <div
+                                    className="w-32 h-40 border border-gray-300 rounded-md flex items-center justify-center overflow-hidden cursor-pointer"
+                                    onClick={() => form.photo_path && setIsPhotoOpen(true)}
+                                >
+                                    {form.photo_path ? (
+                                        <img
+                                            src={form.photo_path}
+                                            alt="Applicant Photo"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center text-gray-500">
+                                            <User className="h-8 w-8 mb-2" />
+                                            <p className="text-xs text-center px-2">No Photo Available</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Existing Fields */}
                         <div className="space-y-1">
                             <p className="text-sm text-gray-500">Full Name</p>
                             <p className="font-medium break-words">{form.name}</p>
@@ -53,7 +84,7 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
                             <p className="font-medium break-words">{form.father_name}</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm text-gray-500">CNIC / Date of Birth</p>
+                            <p className="text-sm text-gray-500">CNIC / Bay Form No.</p>
                             <p className="font-medium break-words">{form.cnic}</p>
                         </div>
                         <div className="space-y-1">
@@ -82,7 +113,7 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
                 {/* Program Info */}
                 <div className="border-t border-border pt-6">
                     <h2 className="text-xl font-semibold mb-4 flex items-center">
-                        <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 text-sm flex-shrink-0">2</span>
+                        <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-cyan-foreground flex items-center justify-center mr-2 text-sm flex-shrink-0">2</span>
                         <span>Program Details</span>
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6 sm:gap-x-8">
@@ -118,7 +149,7 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
                 {form.examinations && form.examinations.length > 0 && (
                     <div className="border-t border-border pt-6">
                         <h2 className="text-xl font-semibold mb-4 flex items-center">
-                            <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 text-sm flex-shrink-0">3</span>
+                            <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-cyan-foreground flex items-center justify-center mr-2 text-sm flex-shrink-0">3</span>
                             <span>Examination Details</span>
                         </h2>
                         <div className="space-y-6">
@@ -164,7 +195,7 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
                 {/* Contact Info */}
                 <div className="border-t border-border pt-6">
                     <h2 className="text-xl font-semibold mb-4 flex items-center">
-                        <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 text-sm flex-shrink-0">4</span>
+                        <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-cyan-foreground flex items-center justify-center mr-2 text-sm flex-shrink-0">4</span>
                         <span>Contact Information</span>
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6 sm:gap-x-8">
@@ -215,6 +246,30 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Full-Screen Photo Modal */}
+            <AnimatePresence>
+                {isPhotoOpen && form.photo_path && (
+                    <motion.div
+                        className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        onClick={() => setIsPhotoOpen(false)}
+                    >
+                        <motion.img
+                            src={form.photo_path}
+                            alt="Applicant Photo Full Screen"
+                            className="max-w-[90vw] max-h-[90vh] object-contain"
+                            onClick={(e) => e.stopPropagation()}
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            transition={{ duration: 0.2 }}
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </Fragment>
     );
 };
