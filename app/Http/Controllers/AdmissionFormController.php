@@ -33,10 +33,6 @@ class AdmissionFormController extends Controller
             $examinationData = $data['examination'];
             unset($data['examination']);
 
-            // Rename program fields for storage
-            $data['program_category'] = $data['program_category'];
-            $data['program_value']    = $data['program_value'];
-
             // Ensure inter_subjects is stored as JSON
             $data['inter_subjects'] = json_encode($data['inter_subjects']);
 
