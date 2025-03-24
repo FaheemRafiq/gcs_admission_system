@@ -76,8 +76,7 @@ class StoreAdmissionFormRequest extends FormRequest
             'cnic'             => [
                 'required',
                 'string',
-                'min:5',
-                'max:15',
+                'regex:/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/',
                 Rule::unique('admission_forms')->where(function ($query) {
                     return $query
                         ->where('cnic', $this->input('cnic'))
@@ -91,7 +90,7 @@ class StoreAdmissionFormRequest extends FormRequest
             'dob'                                       => 'required|date|before:today|date_format:Y-m-d',
             'email'                                     => 'required|email|max:255|unique:admission_forms,email',
             'father_occupation'                         => 'required|string|max:255',
-            'father_cnic'                               => 'required|string|min:10|max:15',
+            'father_cnic'                               => 'required|string|regex:/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/',
             'guardian_name'                             => 'nullable|string|max:255',
             'guardian_occupation'                       => 'nullable|string|max:255',
             'guardian_cell'                             => 'nullable|string|min:10|max:20',
@@ -99,7 +98,7 @@ class StoreAdmissionFormRequest extends FormRequest
             'permanent_address'                         => 'required|string',
             'inter_subjects'                            => 'required_if:program_category,intermediate|array',
             'inter_subjects.*'                          => 'required_if:program_category,intermediate|string|max:255',
-            'photo'                                     => 'required|image|max:2048', // Max 2MB
+            'photo'                                     => 'required|image|mimes:jpg,jpeg,png|max:2048', // Max 2MB
         ], $examinationRules);
     }
 

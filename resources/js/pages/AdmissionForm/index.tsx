@@ -29,6 +29,10 @@ import {
     UserPlus,
 } from 'lucide-react';
 import InputError from '@/components/input-error';
+import { CNICInput } from '@/components/cnic-input';
+import { EmailInput } from '@/components/email-input';
+import { PhoneNumberInput } from '@/components/phone-number';
+import { PakistanCitySelect } from '@/components/select-cities-field';
 
 interface InterSubject {
     id: number;
@@ -222,7 +226,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                         for (const key of Object.keys(validationErrors)) {
                             const element = formRef.current.querySelector<HTMLInputElement>(`[id="${key}"]`);
                             if (element) {
-                                element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" }); 
+                                element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
                                 setTimeout(() => element.focus(), 500);
                                 break;
                             }
@@ -301,21 +305,46 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                             </div>
 
                             {/* Photo Upload */}
-                            <div className={cn("relative w-32 h-40 sm:w-36 sm:h-44 border border-gray-30 rounded-md flex items-center justify-center shrink-0", {
-                                'border-destructive text-destructive': errors.photo
-                            })}>
+                            <div
+                                className={cn(
+                                    "relative w-32 h-40 sm:w-36 sm:h-44 border border-gray-300 rounded-md flex flex-col items-center justify-center shrink-0 cursor-pointer transition hover:border-blue-500 hover:bg-blue-50",
+                                    { 'border-destructive text-destructive': errors.photo }
+                                )}
+                            >
                                 {data.photo ? (
-                                    <img src={URL.createObjectURL(data.photo)} alt="Uploaded Photo" className="w-full h-full object-cover rounded-md" />
+                                    <img
+                                        src={URL.createObjectURL(data.photo)}
+                                        alt="Uploaded Photo"
+                                        className="w-full h-full object-cover rounded-md"
+                                    />
                                 ) : (
-                                    <p className="text-xs text-center px-2">
-                                        Attach one recent Photograph (2" x 1.5") with blue background
-                                    </p>
+                                    <div className="text-center text-gray-600 px-2 flex flex-col items-center">
+                                        <span className="text-2xl">📷</span>
+                                        <p className="text-xs">Click to upload a recent photograph (2" x 1.5") with a blue background</p>
+                                    </div>
                                 )}
                                 <input
+                                    id="photo-upload"
                                     type="file"
-                                    accept="image/*"
+                                    accept="image/jpeg, image/jpg, image/png"
                                     className="absolute w-full h-full opacity-0 cursor-pointer"
-                                    onChange={(e) => e.target.files && setData('photo', e.target.files[0])}
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+
+                                        const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+                                        if (!validTypes.includes(file.type)) {
+                                            toast.error("Only JPG, JPEG, and PNG formats are allowed.");
+                                            return;
+                                        }
+
+                                        if (file.size > 2 * 1024 * 1024) {
+                                            toast.error("File size must be less than 2MB.");
+                                            return;
+                                        }
+
+                                        setData('photo', file);
+                                    }}
                                     required
                                 />
                             </div>
@@ -392,11 +421,12 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                             <p className="text-sm text-gray-600 mb-4">Please fill in your personal information.</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8">
                                 <div className="space-y-1">
-                                    <Label htmlFor="name" className="text-sm text-gray-500 flex items-center">
+                                    <Label htmlFor="name" className="text-sm text-gray-500 flex items-center" required>
                                         <User className="h-4 w-4 mr-1" /> Name of Candidate
                                     </Label>
                                     <Input
                                         id="name"
+                                        placeholder='i.e. Ibrahim Ali'
                                         value={data.name}
                                         onChange={(e) => setData('name', e.target.value)}
                                         isError={errors.name}
@@ -406,25 +436,26 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                     <InputError message={errors.name} className="mt-1" />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="cell" className="text-sm text-gray-500 flex items-center">
+                                    <Label htmlFor="cell" className="text-sm text-gray-500 flex items-center" required>
                                         <Phone className="h-4 w-4 mr-1" /> Mobile Number
                                     </Label>
-                                    <Input
+                                    <PhoneNumberInput
                                         id="cell"
                                         value={data.cell}
-                                        onChange={(e) => setData('cell', e.target.value)}
-                                        isError={errors.cell}
-                                        className="h-10"
-                                        required
+                                        setValue={(value) => setData('cell', value)}
+                                        className={cn("h-10 [&>input]:h-10", {
+                                            'border-destructive': errors.cell
+                                        })}
                                     />
                                     <InputError message={errors.cell} className="mt-1" />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="father_name" className="text-sm text-gray-500 flex items-center">
+                                    <Label htmlFor="father_name" className="text-sm text-gray-500 flex items-center" required>
                                         <User className="h-4 w-4 mr-1" /> Father’s Name
                                     </Label>
                                     <Input
                                         id="father_name"
+                                        placeholder='i.e. Muhammad Ali'
                                         value={data.father_name}
                                         onChange={(e) => setData('father_name', e.target.value)}
                                         isError={errors.father_name}
@@ -434,61 +465,53 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                     <InputError message={errors.father_name} className="mt-1" />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="father_cell" className="text-sm text-gray-500 flex items-center">
+                                    <Label htmlFor="father_cell" className="text-sm text-gray-500 flex items-center" required>
                                         <Phone className="h-4 w-4 mr-1" /> Father’s Mobile
                                     </Label>
-                                    <Input
+                                    <PhoneNumberInput
                                         id="father_cell"
                                         value={data.father_cell}
-                                        onChange={(e) => setData('father_cell', e.target.value)}
-                                        isError={errors.father_cell}
-                                        className="h-10"
-                                        required
+                                        setValue={(value) => setData('father_cell', value)}
+                                        className={cn("h-10 [&>input]:h-10", {
+                                            "border-destructive": errors.father_cell
+                                        })}
                                     />
                                     <InputError message={errors.father_cell} className="mt-1" />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="cnic" className="text-sm text-gray-500 flex items-center">
-                                        <FileText className="h-4 w-4 mr-1" /> CNIC / Bay Form No.
+                                    <Label htmlFor="cnic" className="text-sm text-gray-500 flex items-center" required>
+                                        CNIC / Bay Form No.
                                     </Label>
-                                    <Input
-                                        id="cnic"
-                                        type="text"
+                                    <CNICInput
+                                        inputId='cnic'
                                         value={data.cnic}
-                                        onChange={(e) => {
-                                            let { value } = e.target;
-                                            if (value.includes(' ')) {
-                                                value = value.replace(' ', '');
-                                            }
-
-                                            setData('cnic', value);
-                                        }}
+                                        onChange={value => setData('cnic', value)}
                                         isError={errors.cnic}
                                         className="h-10"
-                                        required
                                     />
                                     <InputError message={errors.cnic} className="mt-1" />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="domicile" className="text-sm text-gray-500 flex items-center">
-                                        <MapPin className="h-4 w-4 mr-1" /> Domicile
+                                    <Label htmlFor="domicile" className="text-sm text-gray-500 flex items-center" required>
+                                        Domicile
                                     </Label>
-                                    <Input
-                                        id="domicile"
+                                    <PakistanCitySelect
+                                        selectId="domicile"
+                                        placeholder='i.e. Karachi'
                                         value={data.domicile}
-                                        onChange={(e) => setData('domicile', e.target.value)}
+                                        onChange={(value) => setData('domicile', value)}
                                         isError={errors.domicile}
                                         className="h-10"
-                                        required
                                     />
                                     <InputError message={errors.domicile} className="mt-1" />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="religion" className="text-sm text-gray-500 flex items-center">
+                                    <Label htmlFor="religion" className="text-sm text-gray-500 flex items-center" required>
                                         <BookOpen className="h-4 w-4 mr-1" /> Religion
                                     </Label>
                                     <Input
                                         id="religion"
+                                        placeholder='i.e. Islam'
                                         value={data.religion}
                                         onChange={(e) => setData('religion', e.target.value)}
                                         isError={errors.religion}
@@ -498,7 +521,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                     <InputError message={errors.religion} className="mt-1" />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="dob" className="text-sm text-gray-500 flex items-center">
+                                    <Label htmlFor="dob" className="text-sm text-gray-500 flex items-center" required>
                                         <Calendar className="h-4 w-4 mr-1" /> Date of Birth
                                     </Label>
                                     <Input
@@ -514,12 +537,13 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                     <InputError message={errors.dob} className="mt-1" />
                                 </div>
                                 <div className="space-y-1 md:col-span-2 lg:col-span-3">
-                                    <Label htmlFor="email" className="text-sm text-gray-500 flex items-center">
+                                    <Label htmlFor="email" className="text-sm text-gray-500 flex items-center" required>
                                         <Mail className="h-4 w-4 mr-1" /> Email Address
                                     </Label>
-                                    <Input
+                                    <EmailInput
                                         id="email"
                                         type="email"
+                                        placeholder='i.e. ibrahim@gmail.com'
                                         value={data.email}
                                         onChange={(e) => setData('email', e.target.value)}
                                         isError={errors.email}
@@ -529,11 +553,12 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                     <InputError message={errors.email} className="mt-1" />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="father_occupation" className="text-sm text-gray-500 flex items-center">
+                                    <Label htmlFor="father_occupation" className="text-sm text-gray-500 flex items-center" required>
                                         <Briefcase className="h-4 w-4 mr-1" /> Father’s Occupation
                                     </Label>
                                     <Input
                                         id="father_occupation"
+                                        placeholder='i.e. Business'
                                         value={data.father_occupation}
                                         onChange={(e) => setData('father_occupation', e.target.value)}
                                         isError={errors.father_occupation}
@@ -542,20 +567,13 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                     <InputError message={errors.father_occupation} className="mt-1" />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="father_cnic" className="text-sm text-gray-500 flex items-center">
-                                        <FileText className="h-4 w-4 mr-1" /> Father’s CNIC
+                                    <Label htmlFor="father_cnic" className="text-sm text-gray-500 flex items-center" required>
+                                        Father’s CNIC
                                     </Label>
-                                    <Input
-                                        id="father_cnic"
+                                    <CNICInput
+                                        inputId='father_cnic'
                                         value={data.father_cnic}
-                                        onChange={(e) => {
-                                            let { value } = e.target;
-                                            if (value.includes(' ')) {
-                                                value = value.replace(' ', '');
-                                            }
-
-                                            setData('father_cnic', value);
-                                        }}
+                                        onChange={value => setData('father_cnic', value)}
                                         isError={errors.father_cnic}
                                         className="h-10"
                                     />
@@ -572,6 +590,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                     </Label>
                                     <Input
                                         id="guardian_name"
+                                        placeholder='i.e. Ibrahim'
                                         value={data.guardian_name}
                                         onChange={(e) => setData('guardian_name', e.target.value)}
                                         isError={errors.guardian_name}
@@ -585,6 +604,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                     </Label>
                                     <Input
                                         id="guardian_occupation"
+                                        placeholder='i.e. Business'
                                         value={data.guardian_occupation}
                                         onChange={(e) => setData('guardian_occupation', e.target.value)}
                                         isError={errors.guardian_occupation}
@@ -596,21 +616,21 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                     <Label htmlFor="guardian_cell" className="text-sm text-gray-500 flex items-center">
                                         <Phone className="h-4 w-4 mr-1" /> Guardian Mobile
                                     </Label>
-                                    <Input
+                                    <PhoneNumberInput
                                         id="guardian_cell"
                                         value={data.guardian_cell}
-                                        onChange={(e) => setData('guardian_cell', e.target.value)}
-                                        isError={errors.guardian_cell}
-                                        className="h-10"
+                                        setValue={(value) => setData('guardian_cell', value)}
+                                        className={cn("h-10 [&>input]:h-10", errors.guardian_cell && "border-red-500")}
                                     />
                                     <InputError message={errors.guardian_cell} className="mt-1" />
                                 </div>
                                 <div className="space-y-1 md:col-span-2 lg:col-span-3">
-                                    <Label htmlFor="present_address" className="text-sm text-gray-500 flex items-center">
+                                    <Label htmlFor="present_address" className="text-sm text-gray-500 flex items-center" required>
                                         <Home className="h-4 w-4 mr-1" /> Present Address
                                     </Label>
                                     <Input
                                         id="present_address"
+                                        placeholder='i.e. House # 56, Street # 10, Block C, Gulberg III, Lahore, Pakistan'
                                         value={data.present_address}
                                         onChange={(e) => setData('present_address', e.target.value)}
                                         isError={errors.present_address}
@@ -620,11 +640,12 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                     <InputError message={errors.present_address} className="mt-1" />
                                 </div>
                                 <div className="space-y-1 md:col-span-2 lg:col-span-3">
-                                    <Label htmlFor="permanent_address" className="text-sm text-gray-500 flex items-center">
+                                    <Label htmlFor="permanent_address" className="text-sm text-gray-500 flex items-center" required>
                                         <Home className="h-4 w-4 mr-1" /> Permanent Address
                                     </Label>
                                     <Input
                                         id="permanent_address"
+                                        placeholder='i.e. House # 56, Street # 10, Block C, Gulberg III, Lahore, Pakistan'
                                         value={data.permanent_address}
                                         onChange={(e) => setData('permanent_address', e.target.value)}
                                         isError={errors.permanent_address}
@@ -691,9 +712,10 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                                     </Label>
                                                     <Input
                                                         id={`${levelKey}_year`}
-                                                        min={2000}
+                                                        min={new Date().getFullYear() - 50}
                                                         max={new Date().getFullYear()}
                                                         type="number"
+                                                        placeholder='i.e. 2022'
                                                         value={LevelData.year}
                                                         onChange={(e) =>
                                                             setData('examination', {
@@ -712,6 +734,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                                     <Input
                                                         id={`${levelKey}_roll_no`}
                                                         name={`${levelKey}_roll_no`}
+                                                        placeholder='i.e. 142824'
                                                         value={LevelData.roll_no}
                                                         type='number'
                                                         onChange={(e) =>
@@ -732,6 +755,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                                         id={`${levelKey}_marks`}
                                                         min={100}
                                                         max={5000}
+                                                        placeholder='i.e. 999'
                                                         type="number"
                                                         value={LevelData.marks}
                                                         onChange={(e) =>
@@ -752,6 +776,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                                         id={`${levelKey}_percentage`}
                                                         min={1}
                                                         max={100}
+                                                        placeholder='i.e. 90.81'
                                                         step="0.1"
                                                         type="number"
                                                         value={LevelData.percentage}
@@ -771,6 +796,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                                     </Label>
                                                     <Input
                                                         id={`${levelKey}_subjects`}
+                                                        placeholder='i.e. Physics, Chemistry, Biology'
                                                         value={LevelData.subjects}
                                                         onChange={(e) =>
                                                             setData('examination', {
@@ -788,6 +814,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                                     <Input
                                                         id={`${levelKey}_board_university`}
                                                         value={LevelData.board_university}
+                                                        placeholder='i.e. BISE Lahore'
                                                         onChange={(e) =>
                                                             setData('examination', {
                                                                 ...data.examination,
@@ -804,6 +831,7 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                                     <Input
                                                         id={`${levelKey}_school_college`}
                                                         value={LevelData.school_college}
+                                                        placeholder='i.e. Govt. College Lahore'
                                                         onChange={(e) =>
                                                             setData('examination', {
                                                                 ...data.examination,
@@ -832,23 +860,37 @@ const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
                                     </li>
                                     <li>Ensure all information, including examination details and program selection, is accurate.</li>
                                     <li>Multiple submissions with the same CNIC, shift, and program combination are not allowed.</li>
+                                    <li>The photo must have a solid blue background, be less than 2MB in size, and be in JPG, JPEG, or PNG format; otherwise, it will not be accepted.</li>
                                     <li>
                                         Contact support at{' '}
-                                        <a href="mailto:support@example.com" className="underline">
-                                            support@example.com
+                                        <a href="mailto:gcswahdatroad@gmail.com" className="underline">
+                                            gcswahdatroad@gmail.com
                                         </a>{' '}
                                         if you need assistance.
                                     </li>
                                 </ul>
                             </div>
-                            <div className="flex justify-end print:hidden">
+                            <div className="flex justify-between items-center print:hidden">
+                                <div className="text-center self-end">
+                                    <span className="text-sm text-gray-600">Crafted with</span>
+                                    <span className="text-lg mx-1 animate-pulse">❤️</span>
+                                    <span className="text-sm text-gray-600">by</span>
+                                    <a
+                                        href="https://github.com/FaheemRafiq"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="text-purple-600 hover:text-purple-800 hover:underline font-semibold mx-1 transition-colors duration-200"
+                                    >
+                                        Faheem
+                                    </a>
+                                </div>
+
                                 <Button
                                     variant={'destructive'}
                                     disabled={processing}
-                                    className="flex items-center gap-2 px-6 py-2"
                                 >
                                     {processing && <Loader2 className="h-4 w-4 animate-spin" />}
-                                    Submit Form
+                                    <span>Submit Form</span>
                                 </Button>
                             </div>
                         </div>
