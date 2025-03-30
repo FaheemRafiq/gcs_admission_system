@@ -3,21 +3,38 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
+use App\Models\Shift;
 use Illuminate\Http\Request;
 use App\Models\AdmissionForm;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Cache;
+use App\Http\Services\AdmissionService;
+use App\Http\Services\ProgramGroupService;
 use App\Http\Requests\StoreAdmissionFormRequest;
 
 class AdmissionFormController extends Controller
 {
+    public function __construct(
+        private ProgramGroupService $programGroupService
+    )
+    {
+        //
+    }
+
     public function index()
     {
-        $programGroups = config('programs.groups');
-        $shifts        = AdmissionForm::SHIFTS;
+        $programGroups = $this->programGroupService->getProgramGroups();
+        $shifts        = Shift::active()->get();
 
         return Inertia::render('AdmissionForm/index', compact('programGroups', 'shifts'));
     }
 
+    /**
+     * Handle the submission of the admission form.
+     *
+     * @param  \App\Http\Requests\StoreAdmissionFormRequest  $request
+     * @return \Illuminate\Http\Response
+     */
     public function store(StoreAdmissionFormRequest $request)
     {
         try {

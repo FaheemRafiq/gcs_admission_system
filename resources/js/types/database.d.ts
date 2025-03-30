@@ -4,15 +4,17 @@ type Timestamps = {
 };
 
 type FormStatus = 'pending' | 'approved' | 'rejected';
+type Status = 'active' | 'inactive';
 
-type Examination = {
+type FormExamination = {
   id: number;
   admission_form_id: number;
   name: string;
   year: string;
   roll_no: string;
-  marks: string;
-  percentage: string;
+  total_marks: number;
+  obtained_marks: number;
+  percentage: number;
   subjects: string;
   board_university: string;
   school_college: string;
@@ -44,10 +46,50 @@ type AdmissionForm = {
   permanent_address: string;
   inter_subjects: string[];
   photo_path: string;
-  examinations: Examination[];
+  examinations: FormExamination[];
 } & Timestamps;
 
+type SubjectCombination = {
+  id: number,
+  program_id: number,
+  subjects: string
+} & Timestamps;
 
+type ExaminationResults = {
+  id: number;
+  title: string;
+  sub_title: string | null;
+} & Timestamps;
+
+type Shift = {
+  id: number;
+  name: string;
+  status: Status;
+} & Timestamps;
+
+type ProgramGroup = {
+  id: number;
+  name: string;
+  status: Status;
+
+  programs?: Program[];
+  examination_results?: ExaminationResults[];
+} & Timestamps;
+
+type Program = {
+  id: number;
+  name: string;
+  status: Status;
+  shift_id: number | null;
+  program_group_id: number;
+
+  program_group?: ProgramGroup;
+  shift?: Shift;
+  examination_results?: ExaminationResults[];
+  subject_combinations?: SubjectCombination[];
+} & Timestamps;
+
+// Pagination
 interface PaginationLink {
   url: string
   label: string
@@ -91,4 +133,16 @@ interface ResourcePaginator<T> {
 }
 
 
-export { Examination, AdmissionForm, FormStatus, PaginationLink, LengthAwarePaginator, ResourcePaginator };
+export { 
+  FormExamination, 
+  AdmissionForm, 
+  FormStatus, 
+  Status,
+  SubjectCombination,
+  Shift,
+  ProgramGroup,
+  Program,
+  PaginationLink, 
+  LengthAwarePaginator, 
+  ResourcePaginator 
+};

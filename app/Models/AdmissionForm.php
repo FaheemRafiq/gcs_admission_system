@@ -58,6 +58,6 @@ class AdmissionForm extends Model
     // Relationship with examinations
     public function examinations(): HasMany
     {
-        return $this->hasMany(Examination::class, 'admission_form_id', 'form_no');
+        return $this->hasMany(FormExamination::class, 'admission_form_id', 'form_no');
     }
 }

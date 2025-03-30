@@ -1,46 +1,129 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
-import { setProgram, useAdmissionFormState } from '@/contexts/AdmissionFormContext';
+import React, { Fragment, useId } from 'react';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { BookOpen } from 'lucide-react';
-import { type ProgramGroup } from '..';
+import { BookOpen, Clock } from 'lucide-react';
+import { type SubjectCombination, type Program } from '@/types/database';
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectSeparator,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { useAdmissionFormStore } from '@/store/AdmissionFormStore';
+import InputError from '@/components/input-error';
 
-const ProgramSection: React.FC<{ programGroups: ProgramGroup[] }> = ({ programGroups }) => {
-    const { formData: data, errors } = useAdmissionFormState();
+interface ProgramSectionProps {
+    onValidityChange: (isValid: boolean) => void
+}
+
+const ProgramSection: React.FC<ProgramSectionProps> = ({ onValidityChange }) => {
+    const { formData, errors, setField, program_groups: programGroups, shifts } = useAdmissionFormStore();
+
+    const shiftGroupPrograms = React.useMemo(() => {
+        return programGroups
+            .map(group => ({
+                ...group,
+                programs: group.programs?.filter(program =>
+                    program.shift_id === Number(formData.shift) || program.shift_id === null
+                )
+            }))
+            .filter(group => (group?.programs?.length ?? 0) > 0);
+    }, [programGroups, formData.shift]);
+
+    const subjectCombinations = React.useMemo(() => {
+        return shiftGroupPrograms
+            .flatMap(pg => pg?.programs || [])
+            .find(pg => pg.id === Number(formData.program))
+            ?.subject_combinations || [];
+    }, [shiftGroupPrograms, formData.program]);
+
+    if (
+        formData.shift === '' || 
+        formData.program === '' || 
+        ((subjectCombinations?.length ?? 0) !== 0 &&
+        formData.subject_combination === '')
+    ) {
+        onValidityChange(false);
+    } else {
+        onValidityChange(true);
+    }
 
     return (
-        <div className="border-t border-border pt-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <span className={cn("w-8 h-8 rounded-full bg-cyan-foreground text-secondary-foreground flex items-center justify-center mr-2 text-sm", { 'bg-red-100 text-red-600': errors.program_category || errors.program_value })}>2</span>
-                Program Selection
-            </h2>
-            <p className="text-sm text-destructive mb-4">
-                Please select only one program. Submit a separate form for each additional program.
-            </p>
-            <div className="space-y-6">
-                {programGroups.map((group) => (
-                    <div key={group.label}>
-                        <h3 className="text-lg font-medium text-gray-700 mb-2 flex items-center">
-                            <BookOpen className="h-4 w-4 mr-1" /> {group.label}
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {group.options.map((degree) => (
-                                <Label htmlFor={`${group.category}_${degree}`} key={degree} className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id={`${group.category}_${degree}`}
-                                        checked={data.program_category === group.category && data.program_value === degree}
-                                        onCheckedChange={(checked) => setProgram(group.category, degree, Boolean(checked))}
-                                    />
-                                    <span className="text-sm font-medium">{degree}</span>
-                                </Label>
-                            ))}
-                        </div>
-                    </div>
-                ))}
+        <div className='grid grid-cols-1 gap-y-4 gap-x-8'>
+            <div className="space-y-1">
+                <Label htmlFor='program' className='text-sm text-gray-500 flex items-center mb-1' required>
+                    <Clock className="h-4 w-4 mr-1" /> Select Shift
+                </Label>
+                <Select defaultValue={formData.shift} onValueChange={value => setField('shift', value)}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select Shift" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {shifts?.map(shift => (
+                            <SelectItem value={shift.id.toString()} key={shift.id}>{shift.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <InputError message={errors.shift} className="mt-1" />
             </div>
-            {(errors.program_category || errors.program_value) && (
-                <p className="text-sm text-destructive mt-2">{errors.program_category || errors.program_value}</p>
+            <div className="space-y-1">
+                <Label htmlFor='program' className='text-sm text-gray-500 flex items-center mb-1' required>
+                    <BookOpen className="h-4 w-4 mr-1" /> Select Program
+                </Label>
+                <Select
+                    defaultValue={formData.program}
+                    onValueChange={value => setField('program', value)}
+                    disabled={formData.shift === ''}
+                >
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select Program">
+                            {(() => {
+                                const selectedProgram = shiftGroupPrograms
+                                    .flatMap(group => group.programs?.map(program => ({ ...program, groupName: group.name })) || [])
+                                    .find(program => program.id.toString() === formData.program);
+
+                                return selectedProgram ? `${selectedProgram.groupName} ( ${selectedProgram.name} )` : "Select Program";
+                            })()}
+                        </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {shiftGroupPrograms.map(group => (
+                            <SelectGroup key={group.id} className="relative">
+                                <SelectLabel className="sticky top-0 z-10 bg-background text-foreground border-b border-border">
+                                    {group.name}
+                                </SelectLabel>
+                                {group.programs?.map(program => (
+                                    <SelectItem value={program.id.toString()} key={program.id}>
+                                        {program.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectGroup>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <InputError message={errors.program} className="mt-1" />
+            </div>
+            {subjectCombinations.length > 0 && (
+                <div className="space-y-1">
+                    <Label htmlFor='program-combination' className='text-sm text-gray-500 flex items-center mb-1' required>
+                        <BookOpen className="h-4 w-4 mr-1" /> Select Program Combination
+                    </Label>
+                    <Select defaultValue={formData.subject_combination} onValueChange={value => setField('subject_combination', value)}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select Subject's Combination" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {subjectCombinations.map(combination => (
+                                <SelectItem value={combination.id.toString()} key={combination.id}>{combination.subjects}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <InputError message={errors.program_combination} className="mt-1" />
+                </div>
             )}
         </div>
     );

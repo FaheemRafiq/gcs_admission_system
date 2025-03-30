@@ -4,11 +4,12 @@ namespace Database\Factories;
 
 use App\Models\Examination;
 use App\Models\AdmissionForm;
+use App\Models\FormExamination;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class ExaminationFactory extends Factory
+class FormExaminationFactory extends Factory
 {
-    protected $model = Examination::class;
+    protected $model = FormExamination::class;
 
     public function definition()
     {

@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\AdmissionForm;
 use App\Models\Examination;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\AdmissionForm;
 use Illuminate\Database\Seeder;
 
 class AdmissionFormSeeder extends Seeder

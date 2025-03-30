@@ -38,15 +38,15 @@ class DashboardController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('form_no', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%")
-                  ->orWhere('program_category', 'like', "%{$search}%")
-                  ->orWhere('program_value', 'like', "%{$search}%");
+                    ->orWhere('name', 'like', "%{$search}%")
+                    ->orWhere('program_category', 'like', "%{$search}%")
+                    ->orWhere('program_value', 'like', "%{$search}%");
             });
         }
 
         // Paginate the results with preserved query parameters
         $admissionForms = $query->paginate($perPage)->appends([
-            'search' => $search,
+            'search'   => $search,
             'per_page' => $perPage,
         ]);
 
@@ -57,8 +57,8 @@ class DashboardController extends Controller
                 'approvedForms'   => $approvedForms,
             ],
             'admissionForms' => AdmissionFormResource::collection($admissionForms),
-            'filters' => [
-                'search' => $search,
+            'filters'        => [
+                'search'   => $search,
                 'per_page' => $perPage,
             ],
         ]);
@@ -75,6 +75,6 @@ class DashboardController extends Controller
             'search',
         ]);
 
-        return Excel::download(new AdmissionFormsExport($filters), 'admission_forms_' . date('Y-m-d') . '.xlsx');
+        return Excel::download(new AdmissionFormsExport($filters), 'admission_forms_'.date('Y-m-d').'.xlsx');
     }
 }

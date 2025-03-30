@@ -3,8 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdmissionFormController;
+use App\Http\Controllers\HomeController;
 
-Route::get('/', [AdmissionFormController::class, 'index'])->name('admission-form.index');
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/admission-form', [AdmissionFormController::class, 'index'])->name('admission-form.index');
 Route::post('/admission-form', [AdmissionFormController::class, 'store'])->name('admission-form.store');
 Route::get('/admission-form/{form_data}/success', [AdmissionFormController::class, 'success'])->name('admission-form.success');
 
