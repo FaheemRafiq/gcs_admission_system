@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ExaminationResult extends Model
 {
@@ -12,7 +12,6 @@ class ExaminationResult extends Model
 
     protected $fillable = [
         'title',
-        'sub_title',
     ];
 
     public function programs()

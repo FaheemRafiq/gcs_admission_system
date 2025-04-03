@@ -1,9 +1,14 @@
-import React, { Fragment, useState } from 'react';
+import { formatDate, formatInto } from '@/lib/dates';
+import { type SharedData } from '@/types';
 import { type AdmissionForm } from '@/types/database';
-import { User } from 'lucide-react';
-import { usePage } from '@inertiajs/react';
-import { motion, AnimatePresence } from "framer-motion";
-import { SharedData } from '@/types';
+import { Link, router, usePage } from '@inertiajs/react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { EyeIcon, User } from 'lucide-react';
+import React, { Fragment, useState } from 'react';
+import FormKeyInfo from './form-key-info';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from '@/lib/utils';
 
 interface Props {
     form: AdmissionForm;
@@ -13,68 +18,45 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
     const { auth } = usePage<SharedData>().props; // Access auth from Inertia page props
     const [isPhotoOpen, setIsPhotoOpen] = useState(false);
 
-    // Parse inter_subjects if it's a string
-    const interSubjects = typeof form.inter_subjects === 'string'
-        ? JSON.parse(form.inter_subjects).filter(Boolean)
-        : (Array.isArray(form.inter_subjects) ? form.inter_subjects.filter(Boolean) : []);
-
-    // Format date strings properly
-    const formatDate = (dateString: string) => {
-        if (!dateString) return 'N/A';
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-            });
-        } catch (e) {
-            console.log("Error parsing date:", e);
-            return dateString; // Return as is if not parseable
-        }
-    };
-
     return (
         <Fragment>
             {/* Document Information */}
-            <div className="bg-secondary text-secondary-foreground border border-border rounded-md p-3 sm:p-4 mb-6 print:border-none">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                    <p className="text-sm">Form Number: <span className="font-semibold">{form.form_no}</span></p>
-                    <p className="text-sm">Submitted on: <span className="font-semibold">{formatDate(form.created_at)}</span></p>
+            <div className="bg-secondary text-secondary-foreground border-border mb-6 rounded-md border p-3 sm:p-4 print:border-none">
+                <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+                    <FormKeyInfo formKey={form.form_key} auth={Boolean(auth.user)} />
+                    <p className="text-sm">
+                        Submitted on: <span className="font-semibold">{formatDate(form.created_at, 'informal', 'datetime')}</span>
+                    </p>
                 </div>
             </div>
 
             {/* Form Details */}
             <div className="space-y-8">
                 {/* Basic Info */}
-                <div className="border-t border-border pt-6">
-                    <h2 className="text-xl font-semibold mb-4 flex items-center">
-                        <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-cyan-foreground flex items-center justify-center mr-2 text-sm flex-shrink-0">1</span>
+                <div className="border-border border-t pt-6">
+                    <h2 className="mb-4 flex items-center text-xl font-semibold">
+                        <span className="bg-cyan-foreground mr-2 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm sm:h-8 sm:w-8">
+                            1
+                        </span>
                         <span>Applicant Information</span>
                     </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6 sm:gap-x-8">
+                    <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
                         {/* Photo - Only show if authenticated */}
-                        {auth.user && (
-                            <div className="space-y-1 sm:col-span-2 lg:col-span-1 flex justify-center lg:justify-start">
-                                <div
-                                    className="w-32 h-40 border border-gray-300 rounded-md flex items-center justify-center overflow-hidden cursor-pointer"
-                                    onClick={() => form.photo_path && setIsPhotoOpen(true)}
-                                >
-                                    {form.photo_path ? (
-                                        <img
-                                            src={form.photo_path}
-                                            alt="Applicant Photo"
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center text-gray-500">
-                                            <User className="h-8 w-8 mb-2" />
-                                            <p className="text-xs text-center px-2">No Photo Available</p>
-                                        </div>
-                                    )}
-                                </div>
+                        <div className="flex justify-center space-y-1 sm:col-span-2 lg:col-span-1 lg:justify-start">
+                            <div
+                                className="flex h-40 w-32 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-gray-300"
+                                onClick={() => auth.user && form.photo_path && setIsPhotoOpen(true)}
+                            >
+                                {form.photo_path ? (
+                                    <img src={form.photo_path} alt="Applicant Photo" className="h-full w-full object-cover" />
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center text-gray-500">
+                                        <User className="mb-2 h-8 w-8" />
+                                        <p className="px-2 text-center text-xs">No Photo Available</p>
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        </div>
 
                         {/* Existing Fields */}
                         <div className="space-y-1">
@@ -91,7 +73,7 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
                         </div>
                         <div className="space-y-1">
                             <p className="text-sm text-gray-500">Date of Birth</p>
-                            <p className="font-medium break-words">{formatDate(form.dob)}</p>
+                            <p className="font-medium break-words">{formatInto(form.dob, 'd-m-Y')}</p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-sm text-gray-500">Email Address</p>
@@ -113,35 +95,26 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
                 </div>
 
                 {/* Program Info */}
-                <div className="border-t border-border pt-6">
-                    <h2 className="text-xl font-semibold mb-4 flex items-center">
-                        <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-cyan-foreground flex items-center justify-center mr-2 text-sm flex-shrink-0">2</span>
+                <div className="border-border border-t pt-6">
+                    <h2 className="mb-4 flex items-center text-xl font-semibold">
+                        <span className="bg-cyan-foreground mr-2 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm sm:h-8 sm:w-8">
+                            2
+                        </span>
                         <span>Program Details</span>
                     </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6 sm:gap-x-8">
+                    <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
                         <div className="space-y-1">
                             <p className="text-sm text-gray-500">Shift</p>
                             <p className="font-medium">{form.shift}</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm text-gray-500">Program Category</p>
-                            <p className="font-medium uppercase">{form.program_category === 'bs' ? 'Bachelor of Science' : form.program_category}</p>
+                            <p className="text-sm text-gray-500">Program</p>
+                            <p className="font-medium">{form.program?.program_full_name}</p>
                         </div>
-                        <div className="space-y-1">
-                            <p className="text-sm text-gray-500">Selected Program</p>
-                            <p className="font-medium break-words">{form.program_value}</p>
-                        </div>
-
-                        {interSubjects.length > 0 && (
-                            <div className="space-y-1 sm:col-span-2 lg:col-span-3">
-                                <p className="text-sm text-gray-500">Intermediate Subjects</p>
-                                <ul className="list-decimal list-inside font-medium space-y-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                                    {interSubjects.map((subject: string, index: number) => (
-                                        <li key={index} className="break-words">
-                                            {subject}
-                                        </li>
-                                    ))}
-                                </ul>
+                        {form.subject_combination && (
+                            <div className="space-y-1">
+                                <p className="text-sm text-gray-500">Subjects</p>
+                                <p className="font-medium break-words">{form.subject_combination}</p>
                             </div>
                         )}
                     </div>
@@ -149,58 +122,71 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
 
                 {/* Examinations */}
                 {form.examinations && form.examinations.length > 0 && (
-                    <div className="border-t border-border pt-6">
-                        <h2 className="text-xl font-semibold mb-4 flex items-center">
-                            <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-cyan-foreground flex items-center justify-center mr-2 text-sm flex-shrink-0">3</span>
+                    <div className="border-border border-t pt-6">
+                        <h2 className="mb-4 flex items-center text-xl font-semibold">
+                            <span className="bg-cyan-foreground mr-2 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm sm:h-8 sm:w-8">
+                                3
+                            </span>
                             <span>Examination Details</span>
                         </h2>
                         <div className="space-y-6">
-                            {form.examinations.sort((a, b) => a.name === 'Matric' ? -1 : (a.name === 'Intermediate' && b.name !== 'Matric') ? -1 : 1).map((exam, index) => (
-                                <div key={exam.id || index} className="bg-secondary text-secondary-foreground border border-border rounded-md p-3 sm:p-4">
-                                    <h3 className="text-lg font-medium mb-3">{exam.name}</h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6 sm:gap-x-8">
-                                        <div className="space-y-1">
-                                            <p className="text-sm text-gray-500">Year</p>
-                                            <p className="font-medium">{exam.year || 'N/A'}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-sm text-gray-500">Roll Number</p>
-                                            <p className="font-medium">{exam.roll_no || 'N/A'}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-sm text-gray-500">Marks</p>
-                                            <p className="font-medium">{exam.marks || 'N/A'}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-sm text-gray-500">Percentage</p>
-                                            <p className="font-medium">{exam.percentage ? `${exam.percentage}%` : 'N/A'}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-sm text-gray-500">Subjects</p>
-                                            <p className="font-medium break-words">{exam.subjects || 'N/A'}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-sm text-gray-500">Board/University</p>
-                                            <p className="font-medium break-words">{exam.board_university || 'N/A'}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-sm text-gray-500">School/College</p>
-                                            <p className="font-medium break-words">{exam.school_college || 'N/A'}</p>
+                            {form.examinations
+                                .sort((a, b) => (a.name === 'Matric' ? -1 : a.name === 'Intermediate' && b.name !== 'Matric' ? -1 : 1))
+                                .map((exam, index) => (
+                                    <div
+                                        key={exam.id || index}
+                                        className="bg-secondary text-secondary-foreground border-border rounded-md border p-3 sm:p-4"
+                                    >
+                                        <h3 className="mb-3 text-lg font-medium">{exam.name}</h3>
+                                        <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
+                                            <div className="space-y-1">
+                                                <p className="text-sm text-gray-500">Year</p>
+                                                <p className="font-medium">{exam.year || 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-sm text-gray-500">Roll Number</p>
+                                                <p className="font-medium">{exam.roll_no || 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-sm text-gray-500">Total Marks</p>
+                                                <p className="font-medium">{exam.total_marks || 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-sm text-gray-500">Obtain Marks</p>
+                                                <p className="font-medium">{exam.obtained_marks || 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-sm text-gray-500">Percentage</p>
+                                                <p className="font-medium">{exam.percentage ? `${exam.percentage}%` : 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-sm text-gray-500">Subjects</p>
+                                                <p className="font-medium break-words">{exam.subjects || 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-sm text-gray-500">Board/University</p>
+                                                <p className="font-medium break-words">{exam.board_university || 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-sm text-gray-500">School/College</p>
+                                                <p className="font-medium break-words">{exam.school_college || 'N/A'}</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
                         </div>
                     </div>
                 )}
 
                 {/* Contact Info */}
-                <div className="border-t border-border pt-6">
-                    <h2 className="text-xl font-semibold mb-4 flex items-center">
-                        <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-cyan-foreground flex items-center justify-center mr-2 text-sm flex-shrink-0">4</span>
+                <div className="border-border border-t pt-6">
+                    <h2 className="mb-4 flex items-center text-xl font-semibold">
+                        <span className="bg-cyan-foreground mr-2 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm sm:h-8 sm:w-8">
+                            4
+                        </span>
                         <span>Contact Information</span>
                     </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6 sm:gap-x-8">
+                    <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
                         <div className="space-y-1">
                             <p className="text-sm text-gray-500">Father's Mobile</p>
                             <p className="font-medium">{form.father_cell}</p>
@@ -216,8 +202,8 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
 
                         {form.guardian_name && (
                             <>
-                                <div className="space-y-1 sm:col-span-2 lg:col-span-3 border-t border-border pt-4 mt-2">
-                                    <p className="text-sm font-medium text-card-foreground/80">Guardian Information</p>
+                                <div className="border-border mt-2 space-y-1 border-t pt-4 sm:col-span-2 lg:col-span-3">
+                                    <p className="text-card-foreground/80 text-sm font-medium">Guardian Information</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-sm text-gray-500">Guardian Name</p>
@@ -234,8 +220,8 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
                             </>
                         )}
 
-                        <div className="space-y-1 sm:col-span-3 lg:col-span-3 border-t border-border pt-4 mt-2">
-                            <p className="text-sm font-medium text-card-foreground/80">Address Information</p>
+                        <div className="border-border mt-2 space-y-1 border-t pt-4 sm:col-span-3 lg:col-span-3">
+                            <p className="text-card-foreground/80 text-sm font-medium">Address Information</p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-sm text-gray-500">Present Address</p>
@@ -247,23 +233,81 @@ const AdmissionFormView: React.FC<Props> = ({ form }) => {
                         </div>
                     </div>
                 </div>
+
+                {/* Documents */}
+                {(form.documents && form.documents.length > 0) && (
+                    <div className="border-border border-t pt-6">
+                        <h2 className="mb-4 flex items-center text-xl font-semibold">
+                            <span className="bg-cyan-foreground mr-2 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm sm:h-8 sm:w-8">
+                                5
+                            </span>
+                            <span>Provided Documents</span>
+                        </h2>
+                        <div className="space-y-6">
+                            {form.documents.map((document, index) => (
+                                <div
+                                    key={document.key + index}
+                                    className="bg-secondary text-secondary-foreground border-border rounded-md border p-3 sm:p-4"
+                                >
+                                    <h3 className="mb-3 text-lg font-medium">{document.name}</h3>
+                                    <div className={cn("grid grid-cols-1 gap-x-6 gap-y-4 sm:gap-x-8 sm:grid-cols-2 ", {
+                                        "lg:grid-cols-3": auth.user
+                                    })}>
+                                        <div className="space-y-1">
+                                            <p className="text-sm text-gray-500">File Type</p>
+                                            <p className="font-medium break-words">
+                                                {document.mime_type === 'application/pdf' ? 'PDF Document' : document.mime_type}
+                                            </p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm text-gray-500">Size</p>
+                                            <p className="font-medium">
+                                                {(document.size / 1024).toFixed(2)} KB
+                                            </p>
+                                        </div>
+                                        {auth.user ? (
+                                            <div className="space-y-1">
+                                                <p className="text-sm text-gray-500">Action</p>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <a
+                                                            href={route('document.view', {
+                                                                documentKey: document.key,
+                                                                formNo: form.form_no
+                                                            })}
+                                                            className="inline-flex items-center px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-200 font-medium text-sm"
+                                                            target="_blank"
+                                                        >
+                                                            <EyeIcon className="h-4 w-4 mr-1" /> View
+                                                        </a>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Click to view PDF document</TooltipContent>
+                                                </Tooltip>
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Full-Screen Photo Modal */}
             <AnimatePresence>
                 {isPhotoOpen && form.photo_path && (
                     <motion.div
-                        className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+                        className="bg-opacity-75 fixed inset-0 z-50 flex items-center justify-center bg-black"
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
                         onClick={() => setIsPhotoOpen(false)}
                     >
                         <motion.img
                             src={form.photo_path}
                             alt="Applicant Photo Full Screen"
-                            className="max-w-[90vw] max-h-[90vh] object-contain"
+                            className="max-h-[90vh] max-w-[90vw] object-contain"
                             onClick={(e) => e.stopPropagation()}
                             initial={{ scale: 0.9 }}
                             animate={{ scale: 1 }}

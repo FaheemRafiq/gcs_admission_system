@@ -1,4 +1,3 @@
-import { CityProvider } from '@/contexts/CityContext';
 import { SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
 import { useEffect, type ReactNode } from 'react';
@@ -22,14 +21,12 @@ function MainLayout({ children, ...props }: Props) {
     }, [flash]);
 
     return (
-        <CityProvider>
-            <div className='flex min-h-screen w-full flex-col' {...props}>
-                {children}
+        <div className="flex min-h-screen w-full flex-col" {...props}>
+            {children}
 
-                <Toaster position='top-center' />
-            </div>
-        </CityProvider>
-    )
-};
+            <Toaster position="top-center" />
+        </div>
+    );
+}
 
 export default MainLayout;

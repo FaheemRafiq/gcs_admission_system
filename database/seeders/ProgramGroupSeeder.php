@@ -15,59 +15,143 @@ class ProgramGroupSeeder extends Seeder
     {
         $programGroups = [
             [
-                'name'     => 'Group For Intermediate Class',
+                'name'     => 'Intermediate',
                 'programs' => [
-                    ['name' => 'F.Sc.Pre-Med'],
-                    ['name' => 'F.Sc.Pre-Eng'],
                     [
-                        'name' => 'F.A',
+                        'name'         => 'F.Sc.Pre-Med',
+                        'abbreviation' => 'FScPM',
+                    ],
+                    [
+                        'name'         => 'F.Sc.Pre-Eng',
+                        'abbreviation' => 'FScPE',
+                    ],
+                    [
+                        'name'         => 'F.A',
                         'combinations' => [
                             ['subjects' => 'Civics, Physical Education, Computer'],
                             ['subjects' => 'Computer, Statistics, Commerce'],
                             ['subjects' => 'Civics, Islamiat, Computer'],
-                        ]
+                        ],
+                        'abbreviation' => 'FA',
                     ],
-                    ['name' => 'G.Sc'],
-                    ['name' => 'I.Com'],
-                    ['name' => 'I.C.S'],
+                    [
+                        'name'         => 'G.Sc',
+                        'abbreviation' => 'GSC',
+                    ],
+                    [
+                        'name'         => 'I.Com',
+                        'abbreviation' => 'ICOM',
+                    ],
+                    [
+                        'name'         => 'I.C.S',
+                        'abbreviation' => 'ICS',
+                    ],
                 ],
             ],
             [
-                'name'     => 'Major Discipline For BS 4-Year Program',
+                'name'     => 'Bachelor of Science',
                 'programs' => [
-                    ['name' => 'BBA'],
-                    ['name' => 'Botany'],
-                    ['name' => 'Bio. Tech'],
-                    ['name' => 'Chemistry'],
-                    ['name' => 'Communication Studies'],
-                    ['name' => 'Economics'],
-                    ['name' => 'Education (B.Ed)'],
-                    ['name' => 'English'],
-                    ['name' => 'Geography'],
-                    ['name' => 'Ict. Education'],
-                    ['name' => 'Information Technology (IT)'],
-                    ['name' => 'Mathematics'],
-                    ['name' => 'Physics'],
-                    ['name' => 'Pol. Science'],
-                    ['name' => 'Sociology'],
-                    ['name' => 'Statistics'],
-                    ['name' => 'Urdu'],
-                    ['name' => 'Zoology'],
+                    [
+                        'name' => 'BBA',
+                    ],
+                    [
+                        'name'         => 'Botany',
+                        'abbreviation' => 'BOT',
+                    ],
+                    [
+                        'name'         => 'Bio. Tech',
+                        'abbreviation' => 'BioT',
+                    ],
+                    [
+                        'name'         => 'Chemistry',
+                        'abbreviation' => 'CHEM',
+                    ],
+                    [
+                        'name'         => 'Communication Studies',
+                        'abbreviation' => 'CMS',
+                    ],
+                    [
+                        'name'         => 'Economics',
+                        'abbreviation' => 'ECO',
+                    ],
+                    [
+                        'name'         => 'Education (B.Ed)',
+                        'abbreviation' => 'BED',
+                    ],
+                    [
+                        'name'         => 'English',
+                        'abbreviation' => 'ENG',
+                    ],
+                    [
+                        'name'         => 'Geography',
+                        'abbreviation' => 'GEO',
+                    ],
+                    [
+                        'name'         => 'Ict. Education',
+                        'abbreviation' => 'ICTE',
+                    ],
+                    [
+                        'name'         => 'Information Technology (IT)',
+                        'abbreviation' => 'IT',
+                    ],
+                    [
+                        'name'         => 'Mathematics',
+                        'abbreviation' => 'MATH',
+                    ],
+                    [
+                        'name'         => 'Physics',
+                        'abbreviation' => 'PHYS',
+                    ],
+                    [
+                        'name'         => 'Pol. Science',
+                        'abbreviation' => 'POL',
+                    ],
+                    [
+                        'name'         => 'Sociology',
+                        'abbreviation' => 'SOC',
+                    ],
+                    [
+                        'name'         => 'Statistics',
+                        'abbreviation' => 'STAT',
+                    ],
+                    [
+                        'name'         => 'Urdu',
+                        'abbreviation' => 'URD',
+                    ],
+                    [
+                        'name'         => 'Zoology',
+                        'abbreviation' => 'ZOO',
+                    ],
                 ],
             ],
             [
-                'name'     => 'Department For Semester 5',
+                'name'     => 'Semester 5',
                 'programs' => [
-                    ['name' => 'Chemistry'],
-                    ['name' => 'Physics'],
-                    ['name' => 'Mathematics'],
-                    ['name' => 'Zoology'],
+                    [
+                        'name'         => 'Chemistry',
+                        'abbreviation' => 'CHEM',
+                    ],
+                    [
+                        'name'         => 'Physics',
+                        'abbreviation' => 'PHYS',
+                    ],
+                    [
+                        'name'         => 'Mathematics',
+                        'abbreviation' => 'MATH',
+                    ],
+                    [
+                        'name'         => 'Zoology',
+                        'abbreviation' => 'ZOO',
+                    ],
                 ],
             ],
             [
                 'name'     => 'Associate Degree',
                 'programs' => [
-                    ['name' => 'B.Com (IT)'],
+                    [
+                        'name'         => 'B.Com (IT)',
+                        'abbreviation' => 'BCOMIT',
+                    ],
                 ],
             ],
         ];
@@ -81,6 +165,7 @@ class ProgramGroupSeeder extends Seeder
             foreach ($programGroup['programs'] as $program) {
                 $newProgram = Program::create([
                     'name'             => $program['name'],
+                    'abbreviation'     => $program['abbreviation'] ?? null,
                     'program_group_id' => $newGroup->id,
                     'status'           => 'active',
                 ]);

@@ -1,338 +1,437 @@
-import React, { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
-import {
-    User,
-    BookOpen,
-    Phone,
-    Home,
-    Calendar,
-    Mail,
-    Briefcase,
-    UserPlus,
-} from 'lucide-react';
-import InputError from '@/components/input-error';
 import { CNICInput } from '@/components/cnic-input';
 import { EmailInput } from '@/components/email-input';
+import InputError from '@/components/input-error';
 import { PhoneNumberInput } from '@/components/phone-number';
-import { PakistanCitySelect } from '@/components/select-cities-field';
-import { useAdmissionFormStore } from '@/store/AdmissionFormStore';
-import toast from 'react-hot-toast';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { withForm } from '@/hooks/use-admission-form';
+import { cn } from '@/lib/utils';
+import { BookOpen, Briefcase, Calendar, Home, Mail, Phone, User, UserPlus } from 'lucide-react';
+import { admissionFormOpts } from './shared-form';
 
-const PersonalInfoSection: React.FC<{ onValidityChange: (isValid: boolean) => void }> = ({ onValidityChange }) => {
-    const { formData, errors, setBulkFields, setErrors} = useAdmissionFormStore();
-    const [data, setStateData] = useState({
-        name: formData.name,
-        photo: formData.photo,
-        cell: formData.cell,
-        cnic: formData.cnic,
-        email: formData.email,
-        phone: formData.phone,
-        city: formData.city,
-        domicile: formData.domicile,
-        religion: formData.religion,
-        dob: formData.dob,
-        father_name: formData.father_name,
-        father_cell: formData.father_cell,
-        father_occupation: formData.father_occupation,
-        father_cnic: formData.father_cnic,
-        guardian_name: formData.guardian_name,
-        guardian_cell: formData.guardian_cell,
-        guardian_occupation: formData.guardian_occupation,
-        present_address: formData.present_address,
-        permanent_address: formData.permanent_address,
-    });
-
-    const setData = (key: string, value: any) => {
-        setStateData((prev) => ({ ...prev, [key]: value }));
-        // setBulkFields({ [key]: value });
-    };
-
-    return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8">
-            <div className="space-y-1 col-span-1 sm:col-span-2">
-                <Label htmlFor="name" className="text-sm text-gray-500 flex items-center" required>
-                    <User className="h-4 w-4 mr-1" /> Name of Candidate
-                </Label>
-                <Input
-                    id="name"
-                    placeholder='i.e. Ibrahim Ali'
-                    value={data.name}
-                    onChange={(e) => setData('name', e.target.value)}
-                    isError={errors.name}
-                    className="h-10"
-                    required
-                />
-                <InputError message={errors.name} className="mt-1" />
-            </div>
-            {/* Photo Upload */}
-            <div className='space-y-1 col-span-1 row-span-3 flex justify-center items-center'>
-                <div
-                    className={cn(
-                        "relative w-32 h-40 sm:w-36 sm:h-44 border border-gray-300 rounded-md flex flex-col items-center justify-center shrink-0 cursor-pointer transition hover:border-blue-500 hover:bg-blue-50",
-                        { 'border-destructive text-destructive': errors.photo }
-                    )}
-                >
-                    {data.photo ? (
-                        <img
-                            src={URL.createObjectURL(data.photo)}
-                            alt="Uploaded Photo"
-                            className="w-full h-full object-cover rounded-md"
-                        />
-                    ) : (
-                        <div className="text-center text-gray-600 px-2 flex flex-col items-center">
-                            <span className="text-2xl">📷</span>
-                            <p className="text-xs">Click to upload a recent photograph (2" x 1.5") with a blue background</p>
+const PersonalInfoSection = withForm({
+    ...admissionFormOpts,
+    render: ({ form }) => {
+        return (
+            <div className="border-border border-t pt-6">
+                <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-800">
+                    <span
+                        className={cn(
+                            'bg-cyan-foreground text-secondary-foreground mr-2 flex h-8 w-8 items-center justify-center rounded-full text-sm',
+                        )}
+                    >
+                        2
+                    </span>
+                    Personal Information
+                </h2>
+                <p className="mb-4 text-sm text-gray-600">Provide your personal details and contact information</p>
+                <div className="grid grid-cols-12 gap-4">
+                    {/* First row - Name and Photo */}
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="name" className="flex items-center text-sm text-gray-500" required>
+                                <User className="mr-1 h-4 w-4" /> Name of Candidate
+                            </Label>
+                            <form.Field name="name">
+                                {(field) => (
+                                    <>
+                                        <Input
+                                            id="name"
+                                            placeholder="i.e. Ibrahim Ali"
+                                            value={field.state.value as string}
+                                            onChange={(e) => field.setValue(e.target.value)}
+                                            className={cn('h-10', { 'border-destructive': field.state.meta.errors.length })}
+                                            required
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
                         </div>
-                    )}
-                    <input
-                        id="photo-upload"
-                        type="file"
-                        accept="image/jpeg, image/jpg, image/png"
-                        className="absolute w-full h-full opacity-0 cursor-pointer"
-                        onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
+                    </div>
 
-                            const validTypes = ["image/jpeg", "image/jpg", "image/png"];
-                            if (!validTypes.includes(file.type)) {
-                                toast.error("Only JPG, JPEG, and PNG formats are allowed.");
-                                return;
-                            }
+                    {/* Mobile Number */}
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="cell" className="flex items-center text-sm text-gray-500" required>
+                                <Phone className="mr-1 h-4 w-4" /> Mobile Number
+                            </Label>
+                            <form.Field name="cell">
+                                {(field) => (
+                                    <PhoneNumberInput
+                                        id="cell"
+                                        value={field.state.value as string}
+                                        setValue={(value) => field.setValue(value)}
+                                        className={cn('h-10 [&>input]:h-10', { 'border-destructive': field.state.meta.errors.length })}
+                                    />
+                                )}
+                            </form.Field>
+                            <InputError message={form.state.fieldMeta?.cell?.errors?.[0]} className="mt-1" />
+                        </div>
+                    </div>
 
-                            if (file.size > 2 * 1024 * 1024) {
-                                toast.error("File size must be less than 2MB.");
-                                return;
-                            }
+                    {/* Father's Name */}
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="father_name" className="flex items-center text-sm text-gray-500" required>
+                                <User className="mr-1 h-4 w-4" /> Father's Name
+                            </Label>
+                            <form.Field name="father_name">
+                                {(field) => (
+                                    <>
+                                        <Input
+                                            id="father_name"
+                                            placeholder="i.e. Muhammad Ali"
+                                            value={field.state.value as string}
+                                            onChange={(e) => field.setValue(e.target.value)}
+                                            className={cn('h-10')}
+                                            required
+                                            isError={Boolean(field.state.meta.errors.length)}
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
+                        </div>
+                    </div>
 
-                            setData('photo', file);
-                        }}
-                        required
-                    />
+                    {/* Father's Mobile */}
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="father_cell" className="flex items-center text-sm text-gray-500" required>
+                                <Phone className="mr-1 h-4 w-4" /> Father's Mobile
+                            </Label>
+                            <form.Field name="father_cell">
+                                {(field) => (
+                                    <>
+                                        <PhoneNumberInput
+                                            id="father_cell"
+                                            value={field.state.value as string}
+                                            setValue={(value) => field.setValue(value)}
+                                            className={cn('h-10 [&>input]:h-10', { 'border-destructive': field.state.meta.errors.length })}
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
+                        </div>
+                    </div>
+
+                    {/* CNIC */}
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="cnic" className="flex items-center text-sm text-gray-500" required>
+                                CNIC / Bay Form No.
+                            </Label>
+                            <form.Field name="cnic">
+                                {(field) => (
+                                    <>
+                                        <CNICInput
+                                            inputId="cnic"
+                                            value={field.state.value as string}
+                                            onChange={(value) => field.setValue(value)}
+                                            className={cn('h-10')}
+                                            isError={Boolean(field.state.meta.errors.length)}
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
+                        </div>
+                    </div>
+
+                    {/* Domicile */}
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="domicile" className="flex items-center text-sm text-gray-500" required>
+                                Domicile
+                            </Label>
+                            <form.Field name="domicile">
+                                {(field) => (
+                                    <>
+                                        <Input
+                                            id="domicile"
+                                            placeholder="i.e. Lahore"
+                                            value={field.state.value as string}
+                                            onChange={(e) => field.setValue(e.target.value)}
+                                            className={cn('h-10')}
+                                            isError={Boolean(field.state.meta.errors.length)}
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
+                        </div>
+                    </div>
+
+                    {/* Religion */}
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="religion" className="flex items-center text-sm text-gray-500" required>
+                                <BookOpen className="mr-1 h-4 w-4" /> Religion
+                            </Label>
+                            <form.Field name="religion">
+                                {(field) => (
+                                    <>
+                                        <Input
+                                            id="religion"
+                                            placeholder="i.e. Islam"
+                                            value={field.state.value as string}
+                                            onChange={(e) => field.setValue(e.target.value)}
+                                            className={cn('h-10')}
+                                            required
+                                            isError={Boolean(field.state.meta.errors.length)}
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
+                        </div>
+                    </div>
+
+                    {/* Date of Birth */}
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="dob" className="flex items-center text-sm text-gray-500" required>
+                                <Calendar className="mr-1 h-4 w-4" /> Date of Birth
+                            </Label>
+                            {/* Make sure must be 15 years older */}
+                            <form.Field
+                                name="dob"
+                                validators={{
+                                    onChange: ({ value }) => {
+                                        const today = new Date();
+                                        const dob = new Date(value);
+                                        const age = today.getFullYear() - dob.getFullYear();
+                                        if (age < 15) {
+                                            return 'Applicant must be at least 15 years old to apply for admission.';
+                                        }
+                                    },
+                                }}
+                            >
+                                {(field) => (
+                                    <>
+                                        <Input
+                                            id="dob"
+                                            type="date"
+                                            max={new Date(Date.now() - 15 * 31556952000).toISOString().split('T')[0]}
+                                            value={field.state.value as string}
+                                            onChange={(e) => field.setValue(e.target.value)}
+                                            className={cn('h-10')}
+                                            required
+                                            isError={form.state.fieldMeta?.dob?.errors?.[0]}
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
+                        </div>
+                    </div>
+
+                    {/* Email Address */}
+                    <div className="col-span-12 sm:col-span-8 md:col-span-8">
+                        <div className="space-y-1">
+                            <Label htmlFor="email" className="flex items-center text-sm text-gray-500" required>
+                                <Mail className="mr-1 h-4 w-4" /> Email Address
+                            </Label>
+                            <form.Field name="email">
+                                {(field) => (
+                                    <>
+                                        <EmailInput
+                                            id="email"
+                                            type="email"
+                                            placeholder="i.e. ibrahim@gmail.com"
+                                            value={field.state.value as string}
+                                            onChange={(e) => field.setValue(e.target.value)}
+                                            className={cn('h-10')}
+                                            required
+                                            isError={Boolean(field.state.meta.errors.length)}
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
+                        </div>
+                    </div>
+
+                    {/* Father's Occupation */}
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="father_occupation" className="flex items-center text-sm text-gray-500" required>
+                                <Briefcase className="mr-1 h-4 w-4" /> Father's Occupation
+                            </Label>
+                            <form.Field name="father_occupation">
+                                {(field) => (
+                                    <>
+                                        <Input
+                                            id="father_occupation"
+                                            placeholder="i.e. Business"
+                                            value={field.state.value as string}
+                                            onChange={(e) => field.setValue(e.target.value)}
+                                            className={cn('h-10')}
+                                            required
+                                            isError={Boolean(field.state.meta.errors.length)}
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
+                        </div>
+                    </div>
+
+                    {/* Father's CNIC */}
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="father_cnic" className="flex items-center text-sm text-gray-500" required>
+                                Father's CNIC
+                            </Label>
+                            <form.Field name="father_cnic">
+                                {(field) => (
+                                    <>
+                                        <CNICInput
+                                            inputId="father_cnic"
+                                            value={field.state.value as string}
+                                            onChange={(value) => field.setValue(value)}
+                                            className={cn('h-10')}
+                                            isError={Boolean(field.state.meta.errors.length)}
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
+                        </div>
+                    </div>
+
+                    {/* Guardian Information Header */}
+                    <div className="border-border col-span-12 mt-2 border-t pt-4">
+                        <p className="flex items-center text-sm font-medium text-gray-700">
+                            <UserPlus className="mr-1 h-4 w-4" /> Guardian Information (Optional)
+                        </p>
+                    </div>
+
+                    {/* Guardian Name */}
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="guardian_name" className="flex items-center text-sm text-gray-500">
+                                <User className="mr-1 h-4 w-4" /> Guardian Name
+                            </Label>
+                            <form.Field name="guardian_name">
+                                {(field) => (
+                                    <>
+                                        <Input
+                                            id="guardian_name"
+                                            placeholder="i.e. Ibrahim"
+                                            value={field.state.value as string}
+                                            onChange={(e) => field.setValue(e.target.value)}
+                                            className={cn('h-10')}
+                                            isError={Boolean(field.state.meta.errors.length)}
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
+                        </div>
+                    </div>
+
+                    {/* Guardian Occupation */}
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="guardian_occupation" className="flex items-center text-sm text-gray-500">
+                                <Briefcase className="mr-1 h-4 w-4" /> Guardian Occupation
+                            </Label>
+                            <form.Field name="guardian_occupation">
+                                {(field) => (
+                                    <>
+                                        <Input
+                                            id="guardian_occupation"
+                                            placeholder="i.e. Business"
+                                            value={field.state.value as string}
+                                            onChange={(e) => field.setValue(e.target.value)}
+                                            className={cn('h-10')}
+                                            isError={Boolean(field.state.meta.errors.length)}
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
+                        </div>
+                    </div>
+
+                    {/* Guardian Mobile */}
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="guardian_cell" className="flex items-center text-sm text-gray-500">
+                                <Phone className="mr-1 h-4 w-4" /> Guardian Mobile
+                            </Label>
+                            <form.Field name="guardian_cell">
+                                {(field) => (
+                                    <>
+                                        <PhoneNumberInput
+                                            id="guardian_cell"
+                                            value={field.state.value as string}
+                                            setValue={(value) => field.setValue(value)}
+                                            className={cn('h-10 [&>input]:h-10', { 'border-destructive': field.state.meta.errors.length })}
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
+                        </div>
+                    </div>
+
+                    {/* Present Address */}
+                    <div className="col-span-12">
+                        <div className="space-y-1">
+                            <Label htmlFor="present_address" className="flex items-center text-sm text-gray-500" required>
+                                <Home className="mr-1 h-4 w-4" /> Present Address
+                            </Label>
+                            <form.Field name="present_address">
+                                {(field) => (
+                                    <>
+                                        <Input
+                                            id="present_address"
+                                            placeholder="i.e. House # 56, Street # 10, Block C, Gulberg III, Lahore, Pakistan"
+                                            value={field.state.value as string}
+                                            onChange={(e) => field.setValue(e.target.value)}
+                                            className={cn('h-10')}
+                                            required
+                                            isError={Boolean(field.state.meta.errors.length)}
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
+                        </div>
+                    </div>
+
+                    {/* Permanent Address */}
+                    <div className="col-span-12">
+                        <div className="space-y-1">
+                            <Label htmlFor="permanent_address" className="flex items-center text-sm text-gray-500" required>
+                                <Home className="mr-1 h-4 w-4" /> Permanent Address
+                            </Label>
+                            <form.Field name="permanent_address">
+                                {(field) => (
+                                    <>
+                                        <Input
+                                            id="permanent_address"
+                                            placeholder="i.e. House # 56, Street # 10, Block C, Gulberg III, Lahore, Pakistan"
+                                            value={field.state.value as string}
+                                            onChange={(e) => field.setValue(e.target.value)}
+                                            className={cn('h-10')}
+                                            required
+                                            isError={Boolean(field.state.meta.errors.length)}
+                                        />
+                                        <InputError message={field.state.meta.errors?.[0]} className="mt-1" />
+                                    </>
+                                )}
+                            </form.Field>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div className="space-y-1 col-span-1 sm:col-span-2">
-                <Label htmlFor="cell" className="text-sm text-gray-500 flex items-center" required>
-                    <Phone className="h-4 w-4 mr-1" /> Mobile Number
-                </Label>
-                <PhoneNumberInput
-                    id="cell"
-                    value={data.cell}
-                    setValue={(value) => setData('cell', value)}
-                    className={cn("h-10 [&>input]:h-10", {
-                        'border-destructive': errors.cell
-                    })}
-                />
-                <InputError message={errors.cell} className="mt-1" />
-            </div>
-            <div className="space-y-1">
-                <Label htmlFor="father_name" className="text-sm text-gray-500 flex items-center" required>
-                    <User className="h-4 w-4 mr-1" /> Father’s Name
-                </Label>
-                <Input
-                    id="father_name"
-                    placeholder='i.e. Muhammad Ali'
-                    value={data.father_name}
-                    onChange={(e) => setData('father_name', e.target.value)}
-                    isError={errors.father_name}
-                    className="h-10"
-                    required
-                />
-                <InputError message={errors.father_name} className="mt-1" />
-            </div>
-            <div className="space-y-1">
-                <Label htmlFor="father_cell" className="text-sm text-gray-500 flex items-center" required>
-                    <Phone className="h-4 w-4 mr-1" /> Father’s Mobile
-                </Label>
-                <PhoneNumberInput
-                    id="father_cell"
-                    value={data.father_cell}
-                    setValue={(value) => setData('father_cell', value)}
-                    className={cn("h-10 [&>input]:h-10", {
-                        "border-destructive": errors.father_cell
-                    })}
-                />
-                <InputError message={errors.father_cell} className="mt-1" />
-            </div>
-            <div className="space-y-1">
-                <Label htmlFor="cnic" className="text-sm text-gray-500 flex items-center" required>
-                    CNIC / Bay Form No.
-                </Label>
-                <CNICInput
-                    inputId='cnic'
-                    value={data.cnic}
-                    onChange={value => setData('cnic', value)}
-                    isError={errors.cnic}
-                    className="h-10"
-                />
-                <InputError message={errors.cnic} className="mt-1" />
-            </div>
-            <div className="space-y-1">
-                <Label htmlFor="domicile" className="text-sm text-gray-500 flex items-center" required>
-                    Domicile
-                </Label>
-                <PakistanCitySelect
-                    selectId="domicile"
-                    placeholder='i.e. Karachi'
-                    value={data.domicile}
-                    onChange={(value) => setData('domicile', value)}
-                    isError={errors.domicile}
-                    className="h-10"
-                />
-                <InputError message={errors.domicile} className="mt-1" />
-            </div>
-            <div className="space-y-1">
-                <Label htmlFor="religion" className="text-sm text-gray-500 flex items-center" required>
-                    <BookOpen className="h-4 w-4 mr-1" /> Religion
-                </Label>
-                <Input
-                    id="religion"
-                    placeholder='i.e. Islam'
-                    value={data.religion}
-                    onChange={(e) => setData('religion', e.target.value)}
-                    isError={errors.religion}
-                    className="h-10"
-                    required
-                />
-                <InputError message={errors.religion} className="mt-1" />
-            </div>
-            <div className="space-y-1">
-                <Label htmlFor="dob" className="text-sm text-gray-500 flex items-center" required>
-                    <Calendar className="h-4 w-4 mr-1" /> Date of Birth
-                </Label>
-                <Input
-                    id="dob"
-                    type="date"
-                    max={new Date().toISOString().split('T')[0]}
-                    value={data.dob}
-                    onChange={(e) => setData('dob', e.target.value)}
-                    isError={errors.dob}
-                    className="h-10"
-                    required
-                />
-                <InputError message={errors.dob} className="mt-1" />
-            </div>
-            <div className="space-y-1 md:col-span-2">
-                <Label htmlFor="email" className="text-sm text-gray-500 flex items-center" required>
-                    <Mail className="h-4 w-4 mr-1" /> Email Address
-                </Label>
-                <EmailInput
-                    id="email"
-                    type="email"
-                    placeholder='i.e. ibrahim@gmail.com'
-                    value={data.email}
-                    onChange={(e) => setData('email', e.target.value)}
-                    isError={errors.email}
-                    className="h-10"
-                    required
-                />
-                <InputError message={errors.email} className="mt-1" />
-            </div>
-            <div className="space-y-1">
-                <Label htmlFor="father_occupation" className="text-sm text-gray-500 flex items-center" required>
-                    <Briefcase className="h-4 w-4 mr-1" /> Father’s Occupation
-                </Label>
-                <Input
-                    id="father_occupation"
-                    placeholder='i.e. Business'
-                    value={data.father_occupation}
-                    onChange={(e) => setData('father_occupation', e.target.value)}
-                    isError={errors.father_occupation}
-                    className="h-10"
-                />
-                <InputError message={errors.father_occupation} className="mt-1" />
-            </div>
-            <div className="space-y-1">
-                <Label htmlFor="father_cnic" className="text-sm text-gray-500 flex items-center" required>
-                    Father’s CNIC
-                </Label>
-                <CNICInput
-                    inputId='father_cnic'
-                    value={data.father_cnic}
-                    onChange={value => setData('father_cnic', value)}
-                    isError={errors.father_cnic}
-                    className="h-10"
-                />
-                <InputError message={errors.father_cnic} className="mt-1" />
-            </div>
-            <div className="space-y-1 md:col-span-2 lg:col-span-3 border-t border-border pt-4 mt-2">
-                <p className="text-sm font-medium text-gray-700 flex items-center">
-                    <UserPlus className="h-4 w-4 mr-1" /> Guardian Information (Optional)
-                </p>
-            </div>
-            <div className="space-y-1">
-                <Label htmlFor="guardian_name" className="text-sm text-gray-500 flex items-center">
-                    <User className="h-4 w-4 mr-1" /> Guardian Name
-                </Label>
-                <Input
-                    id="guardian_name"
-                    placeholder='i.e. Ibrahim'
-                    value={data.guardian_name}
-                    onChange={(e) => setData('guardian_name', e.target.value)}
-                    isError={errors.guardian_name}
-                    className="h-10"
-                />
-                <InputError message={errors.guardian_name} className="mt-1" />
-            </div>
-            <div className="space-y-1">
-                <Label htmlFor="guardian_occupation" className="text-sm text-gray-500 flex items-center">
-                    <Briefcase className="h-4 w-4 mr-1" /> Guardian Occupation
-                </Label>
-                <Input
-                    id="guardian_occupation"
-                    placeholder='i.e. Business'
-                    value={data.guardian_occupation}
-                    onChange={(e) => setData('guardian_occupation', e.target.value)}
-                    isError={errors.guardian_occupation}
-                    className="h-10"
-                />
-                <InputError message={errors.guardian_occupation} className="mt-1" />
-            </div>
-            <div className="space-y-1">
-                <Label htmlFor="guardian_cell" className="text-sm text-gray-500 flex items-center">
-                    <Phone className="h-4 w-4 mr-1" /> Guardian Mobile
-                </Label>
-                <PhoneNumberInput
-                    id="guardian_cell"
-                    value={data.guardian_cell}
-                    setValue={(value) => setData('guardian_cell', value)}
-                    className={cn("h-10 [&>input]:h-10", errors.guardian_cell && "border-red-500")}
-                />
-                <InputError message={errors.guardian_cell} className="mt-1" />
-            </div>
-            <div className="space-y-1 md:col-span-2 lg:col-span-3">
-                <Label htmlFor="present_address" className="text-sm text-gray-500 flex items-center" required>
-                    <Home className="h-4 w-4 mr-1" /> Present Address
-                </Label>
-                <Input
-                    id="present_address"
-                    placeholder='i.e. House # 56, Street # 10, Block C, Gulberg III, Lahore, Pakistan'
-                    value={data.present_address}
-                    onChange={(e) => setData('present_address', e.target.value)}
-                    isError={errors.present_address}
-                    className="h-10"
-                    required
-                />
-                <InputError message={errors.present_address} className="mt-1" />
-            </div>
-            <div className="space-y-1 md:col-span-2 lg:col-span-3">
-                <Label htmlFor="permanent_address" className="text-sm text-gray-500 flex items-center" required>
-                    <Home className="h-4 w-4 mr-1" /> Permanent Address
-                </Label>
-                <Input
-                    id="permanent_address"
-                    placeholder='i.e. House # 56, Street # 10, Block C, Gulberg III, Lahore, Pakistan'
-                    value={data.permanent_address}
-                    onChange={(e) => setData('permanent_address', e.target.value)}
-                    isError={errors.permanent_address}
-                    className="h-10"
-                    required
-                />
-                <InputError message={errors.permanent_address} className="mt-1" />
-            </div>
-        </div>
-    );
-};
+        );
+    },
+});
 
 export default PersonalInfoSection;

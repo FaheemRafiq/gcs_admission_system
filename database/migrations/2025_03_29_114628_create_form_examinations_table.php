@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('school_college');
 
             // Unique constraint to ensure one record per level per admission form
-            $table->unique(['admission_form_id', 'name'], 'unique_examination_level');
+            $table->unique(['admission_form_id', 'name'], 'unique_admission_examination_form');
         });
     }
 

@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use App\Models\Program;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -14,8 +15,8 @@ return new class extends Migration
             $table->string('college_roll_no')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->string('shift'); // Morning or Evening
-            $table->string('program_category'); // e.g., intermediate, bs, semester_5, associate
-            $table->string('program_value'); // e.g., F.Sc.Pre-Med, Chemistry, etc.
+            $table->foreignIdFor(Program::class)->constrained()->nullOnDelete();
+            $table->string('subject_combination')->nullable();
             $table->string('name'); // Applicant name
             $table->string('cell'); // Mobile number
             $table->string('father_name');
@@ -32,12 +33,9 @@ return new class extends Migration
             $table->string('guardian_cell')->nullable();
             $table->text('present_address');
             $table->text('permanent_address');
-            $table->json('inter_subjects')->nullable();
             $table->string('photo_path');
+            $table->json('documents')->nullable();
             $table->timestamps();
-
-            // Composite unique constraint
-            $table->unique(['cnic', 'shift', 'program_category', 'program_value'], 'unique_admission_combo');
         });
     }
 

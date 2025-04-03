@@ -21,10 +21,12 @@ class FormExamination extends Model
 
     protected $appends = ['percentage'];
 
+    public $timestamps = false;
+
     // Accessors
     public function getPercentageAttribute()
     {
-        return ($this->obtained_marks / $this->total_marks) * 100;
+        return round(($this->obtained_marks / $this->total_marks) * 100, 2);
     }
 
     // Relationships

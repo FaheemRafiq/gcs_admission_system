@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\ExaminationResult;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\ExaminationResult;
 
 class ExaminationResultSeeder extends Seeder
 {
@@ -15,19 +14,19 @@ class ExaminationResultSeeder extends Seeder
     {
         $results = [
             [
-                'title' => 'Matric (Arts/Science)',
+                'title'      => 'Matric (Arts/Science)',
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ],
             [
-                'title' => 'Intermediate (Arts/Science)',
+                'title'      => 'Intermediate (Arts/Science)',
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ],
             [
-                'title' => 'Associate Degree (Arts/Science)',
+                'title'      => 'Associate Degree (Arts/Science)',
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ],
         ];
 

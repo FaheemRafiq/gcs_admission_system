@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Examination;
 use App\Models\AdmissionForm;
 use App\Models\FormExamination;
 use Illuminate\Database\Eloquent\Factories\Factory;

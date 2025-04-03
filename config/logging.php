@@ -127,6 +127,14 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        // New Log file for every day
+        'admission_form' => [
+            'driver' => 'single',
+            'path'   => storage_path('logs/'.date('Y-m-d').'/admission_form.log'),
+            'level'  => 'info',
+            'bubble' => false,
+        ],
+
     ],
 
 ];

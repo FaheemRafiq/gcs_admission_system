@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -17,9 +19,9 @@ class AdmissionForm extends Model
     protected $fillable = [
         'shift',
         'diary_no',
+        'program_id',
         'college_roll_no',
-        'program_category',
-        'program_value',
+        'subject_combination',
         'name',
         'cell',
         'father_name',
@@ -36,28 +38,59 @@ class AdmissionForm extends Model
         'guardian_cell',
         'present_address',
         'permanent_address',
-        'inter_subjects',
         'photo_path',
         'status',
+        'documents',
     ];
 
     protected $casts = [
-        'inter_subjects' => 'array',
-        'dob'            => 'date',
+        'dob' => 'date',
     ];
 
+    protected $appends = ['form_key'];
+
     public const STATUSES = ['pending', 'approved', 'rejected'];
+    public const PENDING = 'pending';
+    public const APPROVED = 'approved';
+    public const REJECTED = 'rejected';
 
-    public const SHIFTS = ['Morning', 'Evening'];
-
+    // Accessors & Mutators
     public function getPhotoPathAttribute($value)
     {
-        return asset('storage/'.$value);
+        return Storage::disk('public')->url($value);
     }
 
-    // Relationship with examinations
+    public function getFormKeyAttribute()
+    {
+        return $this->program?->program_abbreviation . '-' . substr($this->shift, 0, 3) . '-' . $this->getKey();
+    }
+
+    public function setDocumentsAttribute($value)
+    {
+        $this->attributes['documents'] = $value ? json_encode($value) : null;
+    }
+
+    public function getDocumentsAttribute($value)
+    {
+        $documents = $value ? json_decode($value, true) : null;
+
+        if (is_array($documents)) {
+            foreach ($documents as $key => $document) {
+                $documents[$key]['key'] = Str::snake($document['name']);
+            }
+        }
+
+        return $documents;
+    }
+
+    // Relationships
     public function examinations(): HasMany
     {
         return $this->hasMany(FormExamination::class, 'admission_form_id', 'form_no');
+    }
+
+    public function program()
+    {
+        return $this->belongsTo(Program::class);
     }
 }

@@ -1,17 +1,16 @@
-import React from 'react';
-import { Head, Link } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckCircle2, Printer } from 'lucide-react';
-import { type AdmissionForm } from '@/types/database';
-import AdmissionFormLayout from '@/layouts/MainLayout';
 import AdmissionFormView from '@/components/admission-form-view';
+import { Button } from '@/components/ui/button';
+import AdmissionFormLayout from '@/layouts/MainLayout';
+import { type AdmissionForm } from '@/types/database';
+import { Head, Link } from '@inertiajs/react';
+import { ArrowLeft, CheckCircle2, Printer } from 'lucide-react';
+import React from 'react';
 
 interface Props {
     form: AdmissionForm;
 }
 
 const AdmissionSuccess: React.FC<Props> = ({ form }) => {
-
     const formatDate = (dateString: string) => {
         if (!dateString) return 'N/A';
         try {
@@ -19,7 +18,7 @@ const AdmissionSuccess: React.FC<Props> = ({ form }) => {
             return date.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
-                day: 'numeric'
+                day: 'numeric',
             });
         } catch (e) {
             return dateString;
@@ -32,20 +31,29 @@ const AdmissionSuccess: React.FC<Props> = ({ form }) => {
 
     return (
         <AdmissionFormLayout>
-            <div className="bg-gray-50 flex items-center justify-center py-6 px-4 sm:px-6 lg:px-8 print:p-0 print:bg-white">
+            <div className="flex items-center justify-center bg-gray-50 px-4 py-6 sm:px-6 lg:px-8 print:bg-white print:p-0">
                 <Head title="Admission Form Submitted Successfully" />
 
-                <div className="w-full max-w-7xl bg-white shadow-lg rounded-lg overflow-hidden print:shadow-none">
+                <div className="w-full max-w-7xl overflow-hidden rounded-lg bg-white shadow-lg print:shadow-none">
                     {/* Success Header - Fully Responsive */}
-                    <div className="bg-green-50 px-4 py-6 sm:px-6 lg:px-8 border-b border-green-100">
-                        <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 mb-4">
-                            <CheckCircle2 className="h-10 w-10 text-green-500 flex-shrink-0" />
-                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center sm:text-left">Form Submitted Successfully!</h1>
+                    <div className="border-b border-green-100 bg-green-50 px-4 py-6 sm:px-6 lg:px-8">
+                        <div className="mb-4 flex flex-col items-center justify-center gap-3 sm:flex-row sm:justify-start">
+                            <CheckCircle2 className="h-10 w-10 flex-shrink-0 text-green-500" />
+                            <h1 className="text-center text-2xl font-bold text-gray-800 sm:text-left sm:text-3xl">Form Submitted Successfully!</h1>
                         </div>
-                        <p className="text-center sm:text-left text-gray-600 max-w-3xl">
-                            Congratulations, <span className="font-medium">{form.name}</span>! Your admission form has been successfully submitted.
-                            Below are the details you provided for your records.
+                        <p className="max-w-3xl text-center sm:text-left text-lg text-gray-600">
+                            <span className="font-semibold text-xl text-gray-800">
+                                Congratulations, {form.name}!
+                            </span>
+                            <span className="block mt-2 text-base">
+                                Your admission form for the <span className="font-medium">{form.program?.program_full_name}</span> program
+                                has been successfully submitted.
+                            </span>
+                            <span className="block mt-4 text-sm">
+                                Below are the details you provided for your records.
+                            </span>
                         </p>
+
                     </div>
 
                     <div className="p-4 sm:p-6 lg:p-8 print:p-4">
@@ -56,10 +64,7 @@ const AdmissionSuccess: React.FC<Props> = ({ form }) => {
                         {/* Action Button */}
                         <div className="mt-10 flex justify-center gap-4 print:hidden">
                             <Link href={route('admission-form.index')}>
-                                <Button
-                                    variant="outline"
-                                    className="flex items-center gap-2 px-4 sm:px-6 py-2 w-full sm:w-auto"
-                                >
+                                <Button variant="outline" className="flex w-full items-center gap-2 px-4 py-2 sm:w-auto sm:px-6">
                                     <ArrowLeft className="h-4 w-4" />
                                     Apply
                                 </Button>
@@ -68,7 +73,7 @@ const AdmissionSuccess: React.FC<Props> = ({ form }) => {
                             <Button
                                 variant="default"
                                 onClick={handlePrint}
-                                className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 px-4 sm:px-6 py-2 w-full sm:w-auto"
+                                className="flex w-full items-center gap-2 bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 sm:w-auto sm:px-6"
                             >
                                 <Printer className="h-4 w-4" />
                                 Print Form Details
@@ -81,10 +86,10 @@ const AdmissionSuccess: React.FC<Props> = ({ form }) => {
                                 For any queries regarding your application, please contact us at{' '}
                                 <a href="mailto:admissions@example.com" className="text-blue-600 hover:underline">
                                     admissions@example.com
-                                </a>
-                                {' '}or call our helpline at +1-800-COLLEGE.
+                                </a>{' '}
+                                or call our helpline at +1-800-COLLEGE.
                             </p>
-                            <p className="text-center text-xs text-gray-400 mt-2">
+                            <p className="mt-2 text-center text-xs text-gray-400">
                                 Application submitted on {formatDate(form.created_at)} • Form #: {form.form_no}
                             </p>
                         </div>

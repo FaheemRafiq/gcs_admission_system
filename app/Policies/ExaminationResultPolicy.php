@@ -2,9 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\ExaminationResult;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use App\Models\ExaminationResult;
 
 class ExaminationResultPolicy
 {

@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('examination_results', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->string('sub_title')->nullable();
             $table->timestamps();
         });
     }

@@ -17,6 +17,7 @@ return new class extends Migration
         Schema::create('programs', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('abbreviation', 10)->nullable();
             $table->foreignIdFor(ProgramGroup::class)->constrained()->cascadeOnDelete();
             // NULL shift means the program is available for all shifts
             $table->foreignIdFor(Shift::class)->nullable()->constrained()->nullOnDelete();

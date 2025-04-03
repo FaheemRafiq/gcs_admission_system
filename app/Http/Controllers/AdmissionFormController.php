@@ -7,125 +7,227 @@ use App\Models\Shift;
 use Illuminate\Http\Request;
 use App\Models\AdmissionForm;
 use Illuminate\Validation\Rule;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Services\AdmissionService;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Services\ProgramGroupService;
+use App\Http\Resources\AdmissionFormResource;
+use App\Exceptions\AdmissionProcessingException;
 use App\Http\Requests\StoreAdmissionFormRequest;
 
 class AdmissionFormController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     */
     public function __construct(
-        private ProgramGroupService $programGroupService
-    )
-    {
+        private ProgramGroupService $programGroupService,
+        private AdmissionService $admissionService
+    ) {
         //
     }
 
+    /**
+     * Display the admission form.
+     *
+     * @return \Inertia\Response
+     */
     public function index()
     {
-        $programGroups = $this->programGroupService->getProgramGroups();
-        $shifts        = Shift::active()->get();
+        // Cache program groups to improve performance
+        $programGroups = Cache::remember('program_groups', 3600, function () {
+            return $this->programGroupService->getProgramGroups();
+        });
+
+        $shifts = Shift::active()->get();
 
         return Inertia::render('AdmissionForm/index', compact('programGroups', 'shifts'));
     }
 
     /**
-     * Handle the submission of the admission form.
+     * Store a newly created admission form.
      *
-     * @param  \App\Http\Requests\StoreAdmissionFormRequest  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(StoreAdmissionFormRequest $request)
     {
+        $requestId  = uniqid('admission_');
+        $logContext = ['request_id' => $requestId, 'ip' => $request->ip()];
+
         try {
+            Log::channel('admission_form')->info('Processing admission form submission', $logContext);
+
             $data = $request->validated();
 
-            // Handle photo upload
-            if ($request->hasFile('photo')) {
-                $path               = $request->file('photo')->store('photos', 'public');
-                $data['photo_path'] = $path;
-            }
-
-            // Extract examination data
-            $examinationData = $data['examination'];
-            unset($data['examination']);
-
-            // Ensure inter_subjects is stored as JSON
-            $data['inter_subjects'] = json_encode($data['inter_subjects']);
-
-            if ($data['program_category'] !== config('programs.groups.0.category')) {
-                unset($data['inter_subjects']);
-            }
-
             // Create the admission form
-            $admissionForm = AdmissionForm::create($data);
+            $admissionForm = $this->admissionService->store($data, $request);
 
-            // Store examination records
-            $resultsRequired = collect(config('programs.groups'))->where('category', $data['program_category'])->first()['results_required'];
-
-            foreach ($examinationData as $details) {
-                if ($this->examinationShouldStore($details, $resultsRequired)) {
-                    $admissionForm->examinations()->create([
-                        'name'             => $details['name'],
-                        'year'             => $details['year'],
-                        'roll_no'          => $details['roll_no'],
-                        'marks'            => $details['marks'],
-                        'percentage'       => $details['percentage'],
-                        'subjects'         => $details['subjects'],
-                        'board_university' => $details['board_university'],
-                        'school_college'   => $details['school_college'],
-                    ]);
-                }
+            // Handle case where service returns a response instead of a model
+            if ($admissionForm instanceof JsonResponse) {
+                return $admissionForm;
             }
 
-            $redirectUrl = route('admission-form.success', ['form_data' => base64_encode(serialize($admissionForm))]);
+            $redirectUrl = $this->admissionService->generateSuccessUrl($admissionForm);
 
-            return response()->json(['message' => 'Admission form submitted successfully!', 'redirectUrl' => $redirectUrl]);
+            Log::channel('admission_form')->info('Admission form submitted successfully',
+                $logContext + ['form_id' => $admissionForm->id]);
+
+            return response()->json([
+                'success'       => true,
+                'message'       => 'Admission form submitted successfully!',
+                'redirectUrl'   => $redirectUrl,
+                'form_id'       => $admissionForm->id,
+            ]);
+        } catch (AdmissionProcessingException $e) {
+            Log::channel('admission_form')->error('Validation error in admission form',
+                $logContext + ['error' => $e->getMessage(), 'code' => $e->getCode()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], $e->getCode() ?: 422);
         } catch (\Exception $e) {
-            logger()->error('Error submitting admission form: '.$e->getMessage());
+            Log::channel('admission_form')->error('Error submitting admission form',
+                $logContext + [
+                    'error' => $e->getMessage(),
+                    'file'  => $e->getFile(),
+                    'line'  => $e->getLine(),
+                ]);
 
-            return response()->json(['message' => 'An error occurred while submitting the admission form.'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while processing your application. Please try again later.',
+            ], 500);
         }
     }
 
-    private function examinationShouldStore($examination, $resultsRequired)
-    {
-        return array_filter($examination) && array_filter($resultsRequired, function ($value) use ($examination) {
-            return $value && $examination['name'] && str_contains(strtolower($examination['name']), strtolower($value));
-        });
-    }
-
-    public function success($form_data)
+    /**
+     * Display the success page after form submission.
+     *
+     * @return \Inertia\Response|\Illuminate\Http\RedirectResponse
+     */
+    public function success()
     {
         try {
-            $form_data = unserialize(base64_decode($form_data));
+            $form_data = request()->query('form_data');
 
-            $form = AdmissionForm::with('examinations')->whereKey($form_data['form_no'])->first();
+            if (! $form_data) {
+                return redirect()->route('admission-form.index')
+                    ->with('error', 'Invalid form data.');
+            }
+
+            $form = $this->admissionService->getAdmissionFormForData($form_data);
+
+            if (! $form) {
+                Log::channel('admission_form')->warning('Invalid or expired form data', [
+                    'form_data' => $form_data,
+                    'ip'        => request()->ip(),
+                ]);
+
+                return redirect()->route('admission-form.index')
+                    ->with('error', 'The form link has expired or is invalid.');
+            }
 
             return Inertia::render('AdmissionForm/success', compact('form'));
         } catch (\Exception $e) {
-            logger()->error('Error retrieving admission form: '.$e->getMessage());
+            Log::channel('admission_form')->error('Error retrieving admission form', [
+                'error' => $e->getMessage(),
+                'ip'    => request()->ip(),
+            ]);
 
-            return redirect('/')->back()->with('error', 'Something went wrong. Please try again.');
+            return redirect()->route('admission-form.index')
+                ->with('error', 'Something went wrong. Please try again or contact support.');
         }
     }
 
+    /**
+     * Display the specified admission form.
+     *
+     * @param  int  $id
+     * @return \Inertia\Response|\Illuminate\Http\RedirectResponse
+     */
     public function show($id)
     {
-        $form = AdmissionForm::with('examinations')->findOrFail($id);
+        try {
+            $form = Cache::remember("admission_form_{$id}", 300, function () use ($id) {
+                return AdmissionForm::with(['examinations' => fn($q) => $q->orderBy('id', 'ASC'), 'program.programGroup'])->findOrFail($id);
+            });
 
-        return Inertia::render('AdmissionForm/show', compact('form'));
+            if (! $form) {
+                return redirect()->route('dashboard')
+                    ->with('error', 'Admission form not found.');
+            }
+
+            return Inertia::render('AdmissionForm/show', [
+                'form' => $form,
+            ]);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You are not authorized to view this admission form.');
+        } catch (\Exception $e) {
+            Log::channel('admission_form')->error('Error viewing admission form', [
+                'id'      => $id,
+                'error'   => $e->getMessage(),
+                'user_id' => auth()->id() ?? 'guest',
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Unable to retrieve the admission form. Please try again.');
+        }
     }
 
+    /**
+     * Update the status of an admission form.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function updateStatus(Request $request, $id)
     {
-        $request->validate([
-            'status' => ['required', Rule::in(AdmissionForm::STATUSES)],
-        ]);
+        try {
+            $form = AdmissionForm::findOrFail($id);
 
-        $form = AdmissionForm::findOrFail($id);
-        $form->update(['status' => $request->status]);
+            $oldStatus = $form->status;
+            $newStatus = $request->status;
 
-        return back()->with('success', 'Form status updated successfully.');
+            $validator = Validator::make($request->all(), [
+                'status' => ['required', Rule::in(AdmissionForm::STATUSES)]
+            ]);
+
+            if($validator->fails()) {
+                return back()->with('error', $validator->errors()->first());
+            }
+
+            $statusUpdated = $form->update([
+                'status'  => $newStatus
+            ]);
+
+            $message = "Admission form status updated from {$oldStatus} to {$newStatus}";
+
+            // Clear cached form data
+            Cache::forget("admission_form_{$id}");
+
+            Log::channel('admission_form')->info('Form status updated', [
+                'form_id'    => $id,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'updated_by' => auth()->id(),
+                'status_updated' => $statusUpdated
+            ]);
+
+            return back()->with('success', $message);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return back()->with('error', 'You are not authorized to update this form status.');
+        } catch (\Exception $e) {
+            Log::channel('admission_form')->error('Error updating form status', [
+                'form_id' => $id,
+                'error'   => $e->getMessage(),
+                'user_id' => auth()->id() ?? 'guest',
+            ]);
+
+            return back()->with('error', 'Failed to update form status. Please try again.');
+        }
     }
 }

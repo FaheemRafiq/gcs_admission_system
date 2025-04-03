@@ -21,26 +21,33 @@ class DashboardController extends Controller
         // Get query parameters
         $search  = $request->query('search', '');
         $perPage = $request->query('per_page', 10); // Default to 10 items per page
-        $page    = $request->query('page', 1);      // Default to page 1
 
         // Build the query
         $query = AdmissionForm::select([
             'form_no',
             'name',
-            'program_category',
-            'program_value',
+            'email',
+            'cell',
+            'father_name',
+            'father_cell',
+            'program_id',
+            'subject_combination',
             'shift',
             'status',
             'created_at',
             'photo_path',
-        ])->orderBy('created_at', 'desc');
+        ])->with([
+            'program' => function ($q) {
+                $q->select('id', 'name', 'abbreviation', 'program_group_id')->with('programGroup:id,name');
+            },
+        ])
+            ->orderBy('created_at', 'desc');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('form_no', 'like', "%{$search}%")
                     ->orWhere('name', 'like', "%{$search}%")
-                    ->orWhere('program_category', 'like', "%{$search}%")
-                    ->orWhere('program_value', 'like', "%{$search}%");
+                    ->orWhere('program', 'like', "%{$search}%");
             });
         }
 
@@ -50,7 +57,7 @@ class DashboardController extends Controller
             'per_page' => $perPage,
         ]);
 
-        return Inertia::render('dashboard', [
+        return Inertia::render('Dashboard/index', [
             'stats' => [
                 'totalAdmissions' => $totalAdmissions,
                 'pendingForms'    => $pendingForms,
@@ -68,7 +75,7 @@ class DashboardController extends Controller
     {
         $filters = $request->only([
             'status',
-            'program_category',
+            'program',
             'shift',
             'start_date',
             'end_date',

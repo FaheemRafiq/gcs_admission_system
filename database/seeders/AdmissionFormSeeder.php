@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Examination;
 use App\Models\AdmissionForm;
+use App\Models\FormExamination;
 use Illuminate\Database\Seeder;
 
 class AdmissionFormSeeder extends Seeder
@@ -24,7 +24,7 @@ class AdmissionFormSeeder extends Seeder
 
                 // Create an examination for each selected level
                 foreach ($selectedLevels as $level) {
-                    Examination::factory()->create([
+                    FormExamination::factory()->create([
                         'admission_form_id' => $form->form_no,
                         'name'              => $level,
                     ]);

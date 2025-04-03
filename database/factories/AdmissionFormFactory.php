@@ -27,8 +27,8 @@ class AdmissionFormFactory extends Factory
             'college_roll_no'     => $this->faker->optional(0.2)->numerify('CR-####'),
             'status'              => $this->faker->randomElement(['pending', 'approved', 'rejected']),
             'shift'               => $this->faker->randomElement(['Morning', 'Evening']),
-            'program_category'    => $programCategory,
-            'program_value'       => $this->faker->randomElement($programValues[$programCategory]),
+            'program'             => $programCategory,
+            'subject_combination' => $this->faker->randomElement($programValues[$programCategory]),
             'name'                => $this->faker->name(),
             'cell'                => $this->faker->phoneNumber(),
             'father_name'         => $this->faker->name('male'),
@@ -45,13 +45,9 @@ class AdmissionFormFactory extends Factory
             'guardian_cell'       => $this->faker->optional(0.4)->phoneNumber(),
             'present_address'     => $this->faker->address(),
             'permanent_address'   => $this->faker->address(),
-            'inter_subjects'      => json_encode($this->faker->randomElements(
-                ['Physics', 'Chemistry', 'Biology', 'Mathematics', 'English', 'Computer Science'],
-                $this->faker->numberBetween(3, 5)
-            )),
-            'photo_path' => 'photos/'.Str::random(40).'.jpg',
-            'created_at' => $this->faker->dateTimeBetween('-1 year', 'now'),
-            'updated_at' => $this->faker->dateTimeBetween('-1 year', 'now'),
+            'photo_path'          => 'photos/'.Str::random(40).'.jpg',
+            'created_at'          => $this->faker->dateTimeBetween('-1 year', 'now'),
+            'updated_at'          => $this->faker->dateTimeBetween('-1 year', 'now'),
         ];
     }
 }

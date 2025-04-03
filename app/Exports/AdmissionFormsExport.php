@@ -33,8 +33,8 @@ class AdmissionFormsExport implements FromCollection, WithColumnWidths, WithCust
             $query->where('status', $this->filters['status']);
         }
 
-        if (! empty($this->filters['program_category'])) {
-            $query->where('program_category', $this->filters['program_category']);
+        if (! empty($this->filters['program'])) {
+            $query->where('program', $this->filters['program']);
         }
 
         if (! empty($this->filters['shift'])) {
@@ -299,7 +299,6 @@ class AdmissionFormsExport implements FromCollection, WithColumnWidths, WithCust
         $matric        = $form->examinations->firstWhere('name', 'Matric');
         $intermediate  = $form->examinations->firstWhere('name', 'Intermediate');
         $associate     = $form->examinations->firstWhere('name', 'Associate Degree');
-        $interSubjects = is_string($form->inter_subjects) ? implode(', ', json_decode($form->inter_subjects, true)) : implode(', ', (array) $form->inter_subjects);
 
         return [
             // Applicant Information
@@ -322,7 +321,6 @@ class AdmissionFormsExport implements FromCollection, WithColumnWidths, WithCust
             $form->shift,
             $form->program_category,
             $form->program_value,
-            $interSubjects ?: 'N/A',
 
             // Examination Details (Matric)
             $matric->year             ?? 'N/A',

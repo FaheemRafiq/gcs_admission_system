@@ -65,7 +65,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => 'Asia/Karachi',
 
     /*
     |--------------------------------------------------------------------------
@@ -123,4 +123,16 @@ return [
         'store'  => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'formats' => [
+        'formal' => [
+            'date'     => 'Y-m-d',          // Example : 2025-04-02
+            'datetime' => 'Y-m-d H:i:s',    // Example : 2025-04-02 15:45:00
+            'time'     => 'H:i:s',          // Example : 15:45:00
+        ],
+        'informal' => [
+            'date'     => 'd M Y',              // Example: 02 Apr 2025
+            'datetime' => 'd M Y, h:i A',       // Example: 02 Apr 2025, 03:45 PM
+            'time'     => 'h:i A',              // Example: 03:45 PM
+        ],
+    ],
 ];

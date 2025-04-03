@@ -1,29 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { Loader2, ArrowRight, ArrowLeft, Save, CheckCircle2 } from 'lucide-react';
-
-// Local
-import { Head } from '@inertiajs/react';
+// pages/AdmissionForm.tsx
+import DeveloperWatermark from '@/components/developer-watermark';
 import { Button } from '@/components/ui/button';
+import { useAppForm } from '@/hooks/use-admission-form';
 import { useAppearance } from '@/hooks/use-appearance';
 import AdmissionFormLayout from '@/layouts/MainLayout';
-import { type ProgramGroup, type Shift } from '@/types/database';
 import { useAdmissionFormStore } from '@/store/AdmissionFormStore';
-import {
-    Stepper,
-    StepperIndicator,
-    StepperItem,
-    StepperTrigger,
-} from "@/components/ui/stepper";
-
-// Native Components
+import { type ProgramGroup, type Shift } from '@/types/database';
+import { Head } from '@inertiajs/react';
+import { Loader2 } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import toast from 'react-hot-toast';
+import ExaminationDetailSection from './_components/ExaminationDetailSection';
+import FormNoteSection from './_components/FormNoteSection';
 import HeaderSection from './_components/HeaderSection';
 import PersonalInfoSection from './_components/PersonalInfoSection';
-import FormNoteSection from './_components/FormNoteSection';
-import ExaminationDetailSection from './_components/ExaminationDetailSection';
 import ProgramSection from './_components/ProgramSection';
-import { cn } from '@/lib/utils';
-import DeveloperWatermark from '@/components/developer-watermark';
-import { Progress } from '@/components/ui/progress';
+import RequiredDocumentSection from './_components/RequiredDocumentSection';
+import { admissionFormOpts } from './_components/shared-form';
 
 interface AdmissionFormProps {
     programGroups: ProgramGroup[];
@@ -31,216 +24,112 @@ interface AdmissionFormProps {
 }
 
 const AdmissionForm = ({ programGroups, shifts }: AdmissionFormProps) => {
-    // Global
-    const { formData, submitForm, processing, setShifts, setProgramGroups, sectionsCompleted, setSectionsCompleted } = useAdmissionFormStore();
     const { updateAppearance } = useAppearance();
+    const formRef = useRef<HTMLFormElement>(null);
+    const { setShifts, setProgramGroups, processing, submitForm } = useAdmissionFormStore();
 
-    // Local
-    const [currentStep, setCurrentStep] = useState(1);
-    const [sectionValid, setSectionValid] = useState(false);
-
-    // Handle section validity change
-    const handleSectionValidityChange = (valid: boolean) => {
-        setSectionValid(valid);
-    };
-
-    const STEPS = [
-        {
-            step: 1,
-            title: 'Program Selection',
-            description: 'Select your desired program and preferred shift',
-            component: (
-                <ProgramSection
-                    onValidityChange={handleSectionValidityChange}
-                />
-            ),
-            navigation: {
-                back: false,
-                next: 2
-            }
+    const form = useAppForm({
+        ...admissionFormOpts,
+        onSubmit: async ({ value }) => {
+            await submitForm(value, formRef);
         },
-        {
-            step: 2,
-            title: 'Personal Information',
-            description: 'Provide your personal and contact details',
-            component: (
-                <PersonalInfoSection
-                    onValidityChange={handleSectionValidityChange}
-                />
-            ),
-            navigation: {
-                back: 1,
-                next: 3
-            }
-        },
-        {
-            step: 3,
-            title: 'Examination Details',
-            description: 'Enter your academic qualifications and marks',
-            component: (
-                <ExaminationDetailSection
-                />
-            ),
-            navigation: {
-                back: 2,
-                next: false
-            }
-        }
-    ];
-
-    // Handle next step
-    const handleNext = () => {
-        if (!sectionValid) return;
-
-        if (!sectionsCompleted.includes(currentStep)) {
-            setSectionsCompleted([...sectionsCompleted, currentStep]);
-        }
-
-        const nextStep = STEPS.find(step => step.step === currentStep)?.navigation.next;
-        if (nextStep) {
-            setCurrentStep(nextStep as number);
-            setSectionValid(false);
-        }
-    };
-
-    // Handle back step
-    const handleBack = () => {
-        const prevStep = STEPS.find(step => step.step === currentStep)?.navigation.back;
-        if (prevStep) {
-            setCurrentStep(prevStep as number);
-        }
-    };
-
-    // Handle final submit
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // Submit the complete form
-        submitForm(e);
-    };
+    });
 
     useEffect(() => {
         updateAppearance('light');
         setProgramGroups(programGroups);
         setShifts(shifts);
-    }, []);
+    }, [updateAppearance]);
 
     return (
         <AdmissionFormLayout>
-            <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center p-4 sm:p-6 md:p-8 print:p-0 print:bg-white">
-                <Head title="Admission Application Form" />
-                <div className="max-w-7xl w-full h-full bg-card text-card-foreground shadow-xl rounded-xl p-6 sm:p-8 print:shadow-none print:p-4">
-                    <HeaderSection />
+            <div className="flex items-center justify-center bg-gray-50 p-4 sm:p-6 md:p-8 print:bg-white print:p-0">
+                <Head title="Admission Form" />
+                <div className="bg-card text-card-foreground w-full max-w-7xl rounded-lg p-6 shadow-lg sm:p-8 print:p-4 print:shadow-none">
+                    <div className="mb-4 flex flex-col items-center justify-center md:flex-row">
+                        <HeaderSection />
 
-                    {/* Progress Indicator */}
-                    <div className="mb-8 border-t border-border">
-                        {/* Step Indicators */}
-                        <Stepper value={currentStep} className="gap-4 mt-6">
-                            {STEPS.map((step) => {
-                                const isCompleted = sectionsCompleted.includes(step.step);
-                                const isActive = currentStep === step.step;
-                                const isDisabled = !isCompleted && step.step > Math.max(...sectionsCompleted, currentStep);
-
-                                return (
-                                    <StepperItem key={step.step} step={step.step} className="flex-1">
-                                        <StepperTrigger
-                                            className={cn(
-                                                "w-full flex flex-col items-center gap-2 relative",
-                                                isDisabled && "pointer-events-none opacity-50"
-                                            )}
-                                        >
-                                            <StepperIndicator
-                                                className={cn(
-                                                    "flex h-10 w-10 items-center justify-center rounded-full border text-sm font-medium",
-                                                    isCompleted
-                                                        ? "bg-green-100 text-green-700 border-green-500"
-                                                        : isActive
-                                                            ? "bg-destructive text-destructive-foreground border-destructive"
-                                                            : "bg-muted text-muted-foreground"
-                                                )}
-                                            >
-                                                {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : step.step}
-                                            </StepperIndicator>
-                                            <div className="text-center">
-                                                <p className="text-sm font-medium">{step.title}</p>
-                                                <p className="text-xs text-muted-foreground hidden md:block">{step.description}</p>
-                                            </div>
-                                        </StepperTrigger>
-                                    </StepperItem>
-                                );
-                            })}
-                        </Stepper>
-
-                    </div>
-
-                    {/* Form */}
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                        {/* Current Section Content */}
-                        <div className="bg-white rounded-lg border border-border p-6 shadow-sm">
-                            {STEPS.map((step) => {
-                                if (step.step === currentStep) {
-                                    return (
-                                        <div key={step.step} className="space-y-6">
-                                            <div className="border-b border-border pb-4">
-                                                <h2 className="text-2xl font-semibold text-foreground">
-                                                    {step.title}
-                                                </h2>
-                                                <p className="text-muted-foreground mt-1">{step.description}</p>
-                                            </div>
-
-                                            {/* Scrollable content area */}
-                                            <div className="h-[calc(100vh-450px)] overflow-y-auto px-1 custom-scrollbar">
-                                                {step.component}
-                                            </div>
-                                        </div>
-                                    );
+                        {/* Photo Upload - Spans 4 columns on sm and up */}
+                        <div className="col-span-12 flex items-start justify-center sm:col-span-4 sm:row-span-3">
+                            <div
+                                className={
+                                    'relative flex h-40 w-32 shrink-0 cursor-pointer flex-col items-center justify-center rounded-md border border-gray-300 transition hover:border-blue-500 hover:bg-blue-50 sm:h-44 sm:w-36'
                                 }
-                                return null;
-                            })}
+                            >
+                                <form.Field name="photo">
+                                    {(field) => (
+                                        <>
+                                            {field.state.value ? (
+                                                <img
+                                                    src={URL.createObjectURL(field.state.value)}
+                                                    alt="Uploaded Photo"
+                                                    className="h-full w-full rounded-md object-cover"
+                                                />
+                                            ) : (
+                                                <div className="flex flex-col items-center px-2 text-center text-gray-600">
+                                                    <span className="text-2xl">📷</span>
+                                                    <p className="text-xs">Click to upload a recent photograph (2" x 1.5") with a blue background</p>
+                                                </div>
+                                            )}
+                                            <input
+                                                id="photo"
+                                                type="file"
+                                                accept="image/jpeg, image/jpg, image/png"
+                                                className="absolute h-full w-full cursor-pointer opacity-0"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+
+                                                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                                                    if (!validTypes.includes(file.type)) {
+                                                        toast.error('Only JPG, JPEG, and PNG formats are allowed.');
+                                                        return;
+                                                    }
+
+                                                    if (file.size > 2 * 1024 * 1024) {
+                                                        toast.error('File size must be less than 2MB.');
+                                                        return;
+                                                    }
+
+                                                    field.setValue(file);
+                                                }}
+                                                required
+                                            />
+                                        </>
+                                    )}
+                                </form.Field>
+                            </div>
                         </div>
+                    </div>
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            form.handleSubmit();
+                        }}
+                        className="space-y-8"
+                        ref={formRef}
+                    >
+                        {/* Programs Section */}
+                        <ProgramSection form={form} />
 
-                        {/* Navigation Controls */}
-                        <div className="flex justify-between items-center mt-6 pt-4 border-t border-border">
-                            <DeveloperWatermark className="text-muted-foreground" />
+                        {/* Personal Information Section */}
+                        <PersonalInfoSection form={form} />
 
-                            <div className="flex gap-3">
-                                {STEPS.find(step => step.step === currentStep)?.navigation.back && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={handleBack}
-                                        className="gap-2"
-                                    >
-                                        <ArrowLeft className="h-4 w-4" />
-                                        Back
-                                    </Button>
-                                )}
+                        {/* Examination Details Section */}
+                        <ExaminationDetailSection form={form} />
 
-                                {STEPS.find(step => step.step === currentStep)?.navigation.next ? (
-                                    <Button
-                                        type="button"
-                                        onClick={handleNext}
-                                        disabled={!sectionValid}
-                                        className="gap-2"
-                                    >
-                                        Next
-                                        <ArrowRight className="h-4 w-4" />
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        type="submit"
-                                        variant="destructive"
-                                        disabled={processing || !sectionValid}
-                                        className="gap-2"
-                                    >
-                                        {processing ? (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Save className="h-4 w-4" />
-                                        )}
-                                        Submit Application
-                                    </Button>
-                                )}
+                        {/* Document Requirements */}
+                        <RequiredDocumentSection form={form} />
+
+                        {/* Submit Button */}
+                        <div className="border-border mt-8 border-t pt-6">
+                            <div className="flex items-center justify-between print:hidden">
+                                <DeveloperWatermark className="sm:self-end" />
+                                <Button variant={'destructive'} disabled={processing} type="submit">
+                                    {processing && <Loader2 className="h-4 w-4 animate-spin" />}
+                                    <span>Submit Form</span>
+                                </Button>
                             </div>
                         </div>
 

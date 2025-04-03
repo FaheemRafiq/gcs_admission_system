@@ -1,11 +1,12 @@
-import React from 'react';
-import { Head, Link } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { type AdmissionForm } from '@/types/database';
 import AdmissionFormView from '@/components/admission-form-view';
-import AppLayout from '@/layouts/app-layout';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/app-layout';
+import { type AdmissionForm } from '@/types/database';
+import { Head, Link } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
+import React from 'react';
+import StatusDropdown from './_components/StatusDropdown';
 
 interface Props {
     form: AdmissionForm;
@@ -14,20 +15,16 @@ interface Props {
 const AdmissionFormShow: React.FC<Props> = ({ form }) => {
     return (
         <AppLayout>
-            <div className="flex items-center justify-center py-6 px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-center px-4 py-6 sm:px-6 lg:px-8">
                 <Head title="Admission Form View" />
 
-                <div className="w-full max-w-7xl bg-card text-card-foreground overflow-hidden border border-border rounded-xl">
-
-                    <div className="flex justify-between items-center p-3 border-b border-border shadow-sm">
+                <div className="bg-card text-card-foreground border-border w-full max-w-7xl overflow-hidden rounded-xl border">
+                    <div className="border-border flex items-center justify-between border-b p-3 shadow-sm">
                         <div>
-                            <Badge variant={form.status === 'rejected' ? 'destructive' : form.status === 'approved' ? 'success' : 'pending'} className='capitalize'>{form.status}</Badge>
+                            <StatusDropdown formNo={form.form_no.toString()} status={form.status} />
                         </div>
                         <Link href={route('dashboard')}>
-                            <Button
-                                variant="outline"
-                                className="flex items-center gap-2 px-4 sm:px-6 py-2 w-full sm:w-auto"
-                            >
+                            <Button variant="outline" className="flex w-full items-center gap-2 px-4 py-2 sm:w-auto sm:px-6">
                                 <ArrowLeft className="h-4 w-4" />
                                 Back
                             </Button>

@@ -5,6 +5,7 @@ namespace App;
 trait StatusTrait
 {
     public const ACTIVE = 'active';
+
     public const INACTIVE = 'inactive';
 
     public const STATUSES = [

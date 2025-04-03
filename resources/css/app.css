@@ -73,7 +73,6 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
-
     *,
     ::after,
     ::before,
@@ -161,13 +160,13 @@
     --sidebar-border: oklch(0.269 0 0);
     --sidebar-ring: oklch(0.439 0 0);
     /* New cyan variables for dark mode */
-    --cyan: oklch(0.75 0.20 197.5);
+    --cyan: oklch(0.75 0.2 197.5);
     /* Slightly lighter and more vivid */
-    --cyan-foreground: oklch(0.20 0.15 197.5);
+    --cyan-foreground: oklch(0.2 0.15 197.5);
     /* Darker for contrast */
-    --cyan-subtle: oklch(0.60 0.16 197.5);
+    --cyan-subtle: oklch(0.6 0.16 197.5);
     /* Less light variant */
-    --cyan-muted: oklch(0.40 0.14 197.5);
+    --cyan-muted: oklch(0.4 0.14 197.5);
     /* Darker muted variant */
 }
 
@@ -180,26 +179,27 @@
         @apply bg-background text-foreground;
     }
 
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 8px;
+    *::-webkit-scrollbar {
+        width: 4px;
+        height: 8px;
     }
-    
-    .custom-scrollbar::-webkit-scrollbar-track {
+
+    *::-webkit-scrollbar-track {
         background: #f1f1f1;
         border-radius: 4px;
     }
-    
-    .custom-scrollbar::-webkit-scrollbar-thumb {
+
+    *::-webkit-scrollbar-thumb {
         background: #ccc;
         border-radius: 4px;
     }
-    
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+
+    *::-webkit-scrollbar-thumb:hover {
         background: #aaa;
     }
-    
+
     @media print {
-        .custom-scrollbar {
+        * {
             overflow: visible;
             height: auto;
         }

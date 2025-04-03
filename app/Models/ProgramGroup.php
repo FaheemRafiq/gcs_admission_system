@@ -25,4 +25,9 @@ class ProgramGroup extends Model
     {
         return $this->belongsToMany(ExaminationResult::class, 'program_group_examination_result');
     }
+
+    public function documentRequirements()
+    {
+        return $this->hasMany(DocumentRequirement::class);
+    }
 }

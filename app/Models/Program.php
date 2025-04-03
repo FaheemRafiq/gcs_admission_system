@@ -13,10 +13,23 @@ class Program extends Model
 
     protected $fillable = [
         'name',
+        'abbreviation',
         'program_group_id',
         'shift_id',
-        'status'
+        'status',
     ];
+
+    protected $appends = ['program_full_name'];
+
+    public function getProgramAbbreviationAttribute()
+    {
+        return $this->abbreviation ?? $this->name;
+    }
+
+    public function getProgramFullNameAttribute()
+    {
+        return $this->programGroup?->name.' - '.$this->name;
+    }
 
     public function programGroup()
     {
@@ -36,5 +49,10 @@ class Program extends Model
     public function examinationResults()
     {
         return $this->belongsToMany(ExaminationResult::class, 'program_examination_result');
+    }
+
+    public function documentRequirements()
+    {
+        return $this->hasMany(DocumentRequirement::class);
     }
 }
