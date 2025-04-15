@@ -50,8 +50,11 @@ class AdmissionForm extends Model
     protected $appends = ['form_key'];
 
     public const STATUSES = ['pending', 'approved', 'rejected'];
+
     public const PENDING = 'pending';
+
     public const APPROVED = 'approved';
+
     public const REJECTED = 'rejected';
 
     // Accessors & Mutators
@@ -62,7 +65,7 @@ class AdmissionForm extends Model
 
     public function getFormKeyAttribute()
     {
-        return $this->program?->program_abbreviation . '-' . substr($this->shift, 0, 3) . '-' . $this->getKey();
+        return $this->program?->program_abbreviation.'-'.substr($this->shift, 0, 3).'-'.$this->getKey();
     }
 
     public function setDocumentsAttribute($value)

@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
-use App\Models\AdmissionForm;
 use Carbon\Carbon;
 use App\Models\Shift;
+use App\Models\AdmissionForm;
 use Illuminate\Validation\Rule;
 use App\Http\Services\ProgramGroupService;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,11 +21,11 @@ class StoreAdmissionFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        $programGroups = app(ProgramGroupService::class)->getProgramGroups();
-        $programs = $programGroups->flatMap(fn($group) => $group['programs'])->values();
-        $programId = $this->input('program_id');
+        $programGroups    = app(ProgramGroupService::class)->getProgramGroups();
+        $programs         = $programGroups->flatMap(fn ($group) => $group['programs'])->values();
+        $programId        = $this->input('program_id');
         $examinationRules = [];
-        $selectedProgram = null;
+        $selectedProgram  = null;
 
         if ($programId) {
             // Find the program group and specific program to get required examination results
@@ -34,16 +34,16 @@ class StoreAdmissionFormRequest extends FormRequest
 
             // Examination validation rules
             $examinationRules = [
-                'examination' => 'required|array|min:' . count($requiredResults) . ',max:' . count($requiredResults),
+                'examination'        => 'required|array|min:'.count($requiredResults).',max:'.count($requiredResults),
                 'examination.*.name' => [
                     'required',
                     'string',
                     'max:255',
                     Rule::in(array_column($requiredResults, 'title')),
                 ],
-                'examination.*.year' => 'required|numeric|digits:4|between:1900,' . date('Y'),
-                'examination.*.roll_no' => 'required|string|max:15',
-                'examination.*.total_marks' => 'required|numeric',
+                'examination.*.year'           => 'required|numeric|digits:4|between:1900,'.date('Y'),
+                'examination.*.roll_no'        => 'required|string|max:15',
+                'examination.*.total_marks'    => 'required|numeric',
                 'examination.*.obtained_marks' => [
                     'required',
                     'numeric',
@@ -62,17 +62,17 @@ class StoreAdmissionFormRequest extends FormRequest
                         }
                     },
                 ],
-                'examination.*.subjects' => 'required|string|max:255',
+                'examination.*.subjects'         => 'required|string|max:255',
                 'examination.*.board_university' => 'required|string|max:255',
-                'examination.*.school_college' => 'required|string|max:255',
+                'examination.*.school_college'   => 'required|string|max:255',
             ];
 
             $documentRequirements = $selectedProgram['document_requirements'] ?? [];
-            $documentsRules = [];
+            $documentsRules       = [];
 
             if (count($documentRequirements) > 0) {
                 $requiredDocuments = collect($documentRequirements)
-                    ->filter(fn($requirement) => $requirement['is_required'])
+                    ->filter(fn ($requirement) => $requirement['is_required'])
                     ->pluck('document.name')
                     ->toArray();
 
@@ -88,8 +88,8 @@ class StoreAdmissionFormRequest extends FormRequest
                             // Find missing required documents
                             $missingDocuments = array_diff($requiredDocuments, $providedDocumentNames);
 
-                            if (!empty($missingDocuments)) {
-                                $fail('Missing required documents: ' . implode(', ', $missingDocuments));
+                            if (! empty($missingDocuments)) {
+                                $fail('Missing required documents: '.implode(', ', $missingDocuments));
                             }
                         },
                     ],
@@ -112,14 +112,13 @@ class StoreAdmissionFormRequest extends FormRequest
                                 $documentName = request()->input("documents.$index.name");
 
                                 // If the document is required, its value must be provided
-                                if (in_array($documentName, $requiredDocuments) && !$value) {
+                                if (in_array($documentName, $requiredDocuments) && ! $value) {
                                     $fail("The document '$documentName' is required and must have a file.");
                                 }
                             }
                         },
                     ],
                 ];
-
             }
         }
 
@@ -139,11 +138,11 @@ class StoreAdmissionFormRequest extends FormRequest
                 Rule::in($programs->pluck('id')->toArray()),
             ],
             'subject_combination' => 'nullable|exists:subject_combinations,id',
-            'name' => 'required|string|max:255',
-            'cell' => 'required|string|min:10|max:20',
-            'father_name' => 'required|string|max:255',
-            'father_cell' => 'required|string|min:10|max:20',
-            'cnic' => [
+            'name'                => 'required|string|max:255',
+            'cell'                => 'required|string|min:10|max:20',
+            'father_name'         => 'required|string|max:255',
+            'father_cell'         => 'required|string|min:10|max:20',
+            'cnic'                => [
                 'required',
                 'string',
                 'regex:/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/',
@@ -151,23 +150,23 @@ class StoreAdmissionFormRequest extends FormRequest
                     return $query
                         ->where('cnic', $this->input('cnic'))
                         ->where('shift', $this->input('shift'))
-                        ->when($selectedProgram, fn($query, $program) => $query->where('program_id', $program['id']))
+                        ->when($selectedProgram, fn ($query, $program) => $query->where('program_id', $program['id']))
                         ->where('subject_combination', $this->input('subject_combination'))
                         ->whereIn('status', [AdmissionForm::APPROVED, AdmissionForm::PENDING]);
                 }),
             ],
-            'domicile' => 'required|string|max:255',
-            'religion' => 'required|string|max:255',
-            'dob' => 'required|date|before:today|date_format:Y-m-d', // Changed to accept yyyy-mm-dd format
-            'email' => 'required|email:rfc,dns|max:255',
-            'father_occupation' => 'required|string|max:255',
-            'father_cnic' => 'required|string|regex:/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/',
-            'guardian_name' => 'nullable|string|max:255',
+            'domicile'            => 'required|string|max:255',
+            'religion'            => 'required|string|max:255',
+            'dob'                 => 'required|date|before:today|date_format:Y-m-d', // Changed to accept yyyy-mm-dd format
+            'email'               => 'required|email:rfc,dns|max:255',
+            'father_occupation'   => 'required|string|max:255',
+            'father_cnic'         => 'required|string|regex:/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/',
+            'guardian_name'       => 'nullable|string|max:255',
             'guardian_occupation' => 'nullable|string|max:255',
-            'guardian_cell' => 'nullable|string|min:10|max:20',
-            'present_address' => 'required|string',
-            'permanent_address' => 'required|string',
-            'photo' => 'required|image|mimes:jpg,jpeg,png|max:2048', // Max 2MB
+            'guardian_cell'       => 'nullable|string|min:10|max:20',
+            'present_address'     => 'required|string',
+            'permanent_address'   => 'required|string',
+            'photo'               => 'required|image|mimes:jpg,jpeg,png|max:2048', // Max 2MB
         ], $examinationRules, $documentsRules);
     }
 
@@ -178,7 +177,7 @@ class StoreAdmissionFormRequest extends FormRequest
     {
         $this->merge([
             'examination' => json_decode($this->input('examination') ?? '[]', true),
-            'dob' => $this->input('dob') ? Carbon::parse($this->input('dob'))->format('Y-m-d') : null,
+            'dob'         => $this->input('dob') ? Carbon::parse($this->input('dob'))->format('Y-m-d') : null,
         ]);
     }
 
@@ -190,11 +189,11 @@ class StoreAdmissionFormRequest extends FormRequest
     public function attributes(): array
     {
         // Get program details to include in error messages
-        $programGroups = app(ProgramGroupService::class)->getProgramGroups();
-        $programs = $programGroups->flatMap(fn($group) => $group['programs'])->values();
-        $programId = $this->input('program_id');
+        $programGroups   = app(ProgramGroupService::class)->getProgramGroups();
+        $programs        = $programGroups->flatMap(fn ($group) => $group['programs'])->values();
+        $programId       = $this->input('program_id');
         $selectedProgram = null;
-        $examAttributes = [];
+        $examAttributes  = [];
 
         if ($programId) {
             $selectedProgram = collect($programs)->firstWhere('id', $programId);
@@ -202,37 +201,37 @@ class StoreAdmissionFormRequest extends FormRequest
 
             // Create attributes for each examination field
             foreach ($requiredResults as $index => $result) {
-                $examTitle = $result['title'] ?? 'Examination';
-                $examAttributes["examination.{$index}.name"] = "{$examTitle} certificate name";
-                $examAttributes["examination.{$index}.year"] = "{$examTitle} year";
-                $examAttributes["examination.{$index}.roll_no"] = "{$examTitle} roll number";
-                $examAttributes["examination.{$index}.total_marks"] = "{$examTitle} total marks";
-                $examAttributes["examination.{$index}.obtained_marks"] = "{$examTitle} obtained marks";
-                $examAttributes["examination.{$index}.subjects"] = "{$examTitle} subjects";
+                $examTitle                                               = $result['title'] ?? 'Examination';
+                $examAttributes["examination.{$index}.name"]             = "{$examTitle} certificate name";
+                $examAttributes["examination.{$index}.year"]             = "{$examTitle} year";
+                $examAttributes["examination.{$index}.roll_no"]          = "{$examTitle} roll number";
+                $examAttributes["examination.{$index}.total_marks"]      = "{$examTitle} total marks";
+                $examAttributes["examination.{$index}.obtained_marks"]   = "{$examTitle} obtained marks";
+                $examAttributes["examination.{$index}.subjects"]         = "{$examTitle} subjects";
                 $examAttributes["examination.{$index}.board_university"] = "{$examTitle} board/university";
-                $examAttributes["examination.{$index}.school_college"] = "{$examTitle} school/college";
+                $examAttributes["examination.{$index}.school_college"]   = "{$examTitle} school/college";
             }
 
             // Create attributes for document fields
             $documentRequirements = $selectedProgram['document_requirements'] ?? [];
 
             foreach ($documentRequirements as $index => $requirement) {
-                $docName = $requirement['document']['name'] ?? 'Document';
-                $examAttributes["documents.{$index}.name"] = $docName;
+                $docName                                    = $requirement['document']['name'] ?? 'Document';
+                $examAttributes["documents.{$index}.name"]  = $docName;
                 $examAttributes["documents.{$index}.value"] = $docName;
             }
         }
 
         return array_merge([
-            'shift' => 'shift (Morning/Evening)',
-            'program_id' => 'program',
-            'cell' => 'phone number',
-            'father_cell' => 'father\'s phone number',
-            'cnic' => 'CNIC number (format: 12345-1234567-1)',
-            'father_cnic' => 'father\'s CNIC number (format: 12345-1234567-1)',
-            'dob' => 'date of birth',
+            'shift'         => 'shift (Morning/Evening)',
+            'program_id'    => 'program',
+            'cell'          => 'phone number',
+            'father_cell'   => 'father\'s phone number',
+            'cnic'          => 'CNIC number (format: 12345-1234567-1)',
+            'father_cnic'   => 'father\'s CNIC number (format: 12345-1234567-1)',
+            'dob'           => 'date of birth',
             'guardian_cell' => 'guardian\'s phone number',
-            'photo' => 'candidate photograph',
+            'photo'         => 'candidate photograph',
         ], $examAttributes);
     }
 
@@ -242,82 +241,82 @@ class StoreAdmissionFormRequest extends FormRequest
     public function messages(): array
     {
         // Get program details for specific error messages
-        $programGroups = app(ProgramGroupService::class)->getProgramGroups();
-        $programs = $programGroups->flatMap(fn($group) => $group['programs'])->values();
-        $programId = $this->input('program_id');
+        $programGroups   = app(ProgramGroupService::class)->getProgramGroups();
+        $programs        = $programGroups->flatMap(fn ($group) => $group['programs'])->values();
+        $programId       = $this->input('program_id');
         $selectedProgram = null;
-        $examMessages = [];
+        $examMessages    = [];
 
         if ($programId) {
             $selectedProgram = collect($programs)->firstWhere('id', $programId);
             $requiredResults = $selectedProgram['examination_results'] ?? [];
 
             // Create specific messages for required examinations
-            $requiredExamNames = implode(', ', array_column($requiredResults, 'title'));
-            $examMessages['examination.min'] = "All required examination details must be provided for this program ({$requiredExamNames}).";
+            $requiredExamNames                    = implode(', ', array_column($requiredResults, 'title'));
+            $examMessages['examination.min']      = "All required examination details must be provided for this program ({$requiredExamNames}).";
             $examMessages['examination.required'] = "Examination details are required for this program ({$requiredExamNames}).";
 
             // Add messages for each examination field
             foreach ($requiredResults as $index => $result) {
-                $examTitle = $result['title'] ?? 'Examination';
+                $examTitle                                    = $result['title'] ?? 'Examination';
                 $examMessages["examination.{$index}.name.in"] = "Please provide a valid examination type for {$examTitle}.";
             }
         }
 
         return array_merge([
-            'shift.required' => 'Please select a shift (Morning or Evening).',
-            'shift.exists' => 'Please select a valid shift from the available options.',
-            'program_id.required' => 'Please select a program to apply for.',
-            'program_id.in' => 'The selected program is not available. Please choose from the provided options.',
-            'name.required' => 'Candidate name is required.',
-            'cell.required' => 'Candidate phone number is required.',
-            'cell.min' => 'Phone number must be at least 10 digits.',
-            'cell.max' => 'Phone number cannot exceed 20 digits.',
-            'father_name.required' => 'Father\'s name is required.',
-            'father_cell.required' => 'Father\'s phone number is required.',
-            'father_cell.min' => 'Father\'s phone number must be at least 10 digits.',
-            'father_cell.max' => 'Father\'s phone number cannot exceed 20 digits.',
-            'cnic.required' => 'CNIC number is required.',
-            'cnic.regex' => 'CNIC must be in the format: 12345-1234567-1.',
-            'cnic.unique' => 'This CNIC has already been used for this program and shift combination.',
-            'father_cnic.required' => 'Father\'s CNIC number is required.',
-            'father_cnic.regex' => 'Father\'s CNIC must be in the format: 12345-1234567-1.',
-            'domicile.required' => 'Domicile is required.',
-            'religion.required' => 'Religion field is required.',
-            'dob.required' => 'Date of birth is required.',
-            'dob.before' => 'Date of birth must be before today.',
-            'dob.date_format' => 'Date of birth must be in YYYY-MM-DD format.',
-            'email.required' => 'Email address is required.',
-            'email.email' => 'Please provide a valid email address.',
+            'shift.required'             => 'Please select a shift (Morning or Evening).',
+            'shift.exists'               => 'Please select a valid shift from the available options.',
+            'program_id.required'        => 'Please select a program to apply for.',
+            'program_id.in'              => 'The selected program is not available. Please choose from the provided options.',
+            'name.required'              => 'Candidate name is required.',
+            'cell.required'              => 'Candidate phone number is required.',
+            'cell.min'                   => 'Phone number must be at least 10 digits.',
+            'cell.max'                   => 'Phone number cannot exceed 20 digits.',
+            'father_name.required'       => 'Father\'s name is required.',
+            'father_cell.required'       => 'Father\'s phone number is required.',
+            'father_cell.min'            => 'Father\'s phone number must be at least 10 digits.',
+            'father_cell.max'            => 'Father\'s phone number cannot exceed 20 digits.',
+            'cnic.required'              => 'CNIC number is required.',
+            'cnic.regex'                 => 'CNIC must be in the format: 12345-1234567-1.',
+            'cnic.unique'                => 'This CNIC has already been used for this program and shift combination.',
+            'father_cnic.required'       => 'Father\'s CNIC number is required.',
+            'father_cnic.regex'          => 'Father\'s CNIC must be in the format: 12345-1234567-1.',
+            'domicile.required'          => 'Domicile is required.',
+            'religion.required'          => 'Religion field is required.',
+            'dob.required'               => 'Date of birth is required.',
+            'dob.before'                 => 'Date of birth must be before today.',
+            'dob.date_format'            => 'Date of birth must be in YYYY-MM-DD format.',
+            'email.required'             => 'Email address is required.',
+            'email.email'                => 'Please provide a valid email address.',
             'father_occupation.required' => 'Father\'s occupation is required.',
-            'guardian_cell.min' => 'Guardian\'s phone number must be at least 10 digits.',
-            'guardian_cell.max' => 'Guardian\'s phone number cannot exceed 20 digits.',
-            'present_address.required' => 'Present address is required.',
+            'guardian_cell.min'          => 'Guardian\'s phone number must be at least 10 digits.',
+            'guardian_cell.max'          => 'Guardian\'s phone number cannot exceed 20 digits.',
+            'present_address.required'   => 'Present address is required.',
             'permanent_address.required' => 'Permanent address is required.',
-            'photo.required' => 'Candidate photograph is required.',
-            'photo.image' => 'The uploaded file must be an image.',
-            'photo.mimes' => 'The photograph must be a JPG, JPEG, or PNG file.',
-            'photo.max' => 'The photograph should be less than 2MB.',
+            'photo.required'             => 'Candidate photograph is required.',
+            'photo.image'                => 'The uploaded file must be an image.',
+            'photo.mimes'                => 'The photograph must be a JPG, JPEG, or PNG file.',
+            'photo.max'                  => 'The photograph should be less than 2MB.',
 
             // Generic examination field messages that will be replaced by specific ones when possible
-            'examination.*.name.required' => 'Examination name is required.',
-            'examination.*.year.required' => 'Examination year is required.',
-            'examination.*.year.digits' => 'Examination year must be 4 digits.',
-            'examination.*.year.between' => 'Examination year must be between 1900 and the current year.',
-            'examination.*.roll_no.required' => 'Examination roll number is required.',
-            'examination.*.total_marks.required' => 'Total marks are required.',
-            'examination.*.total_marks.numeric' => 'Total marks must be a number.',
-            'examination.*.obtained_marks.required' => 'Obtained marks are required.',
-            'examination.*.obtained_marks.numeric' => 'Obtained marks must be a number.',
-            'examination.*.subjects.required' => 'Subjects are required.',
+            'examination.*.name.required'             => 'Examination name is required.',
+            'examination.*.year.required'             => 'Examination year is required.',
+            'examination.*.year.digits'               => 'Examination year must be 4 digits.',
+            'examination.*.year.between'              => 'Examination year must be between 1900 and the current year.',
+            'examination.*.roll_no.required'          => 'Examination roll number is required.',
+            'examination.*.total_marks.required'      => 'Total marks are required.',
+            'examination.*.total_marks.numeric'       => 'Total marks must be a number.',
+            'examination.*.obtained_marks.required'   => 'Obtained marks are required.',
+            'examination.*.obtained_marks.numeric'    => 'Obtained marks must be a number.',
+            'examination.*.subjects.required'         => 'Subjects are required.',
             'examination.*.board_university.required' => 'Board/University is required.',
-            'examination.*.school_college.required' => 'School/College is required.',
+            'examination.*.school_college.required'   => 'School/College is required.',
 
             // Document messages
-            'documents.required' => 'Required documents must be uploaded.',
-            'documents.*.value.file' => 'The uploaded document must be a file.',
+            'documents.required'      => 'Required documents must be uploaded.',
+            'documents.*.value.file'  => 'The uploaded document must be a file.',
             'documents.*.value.mimes' => 'Documents must be in PDF format.',
-            'documents.*.value.max' => 'Documents should be less than 5MB.',
+            'documents.*.value.max'   => 'Documents should be less than 5MB.',
         ], $examMessages);
     }
 
@@ -328,89 +327,89 @@ class StoreAdmissionFormRequest extends FormRequest
      */
     protected function failedValidation(Validator $validator)
     {
-        $errors = $validator->errors();
+        $errors         = $validator->errors();
         $friendlyErrors = collect($errors->messages())
             ->map(function ($messages, $field) {
                 // Transform array-based field names to more readable format
                 if (preg_match('/^examination\.(\d+)\.(.+)$/', $field, $matches)) {
-                    $index = $matches[1];
+                    $index     = $matches[1];
                     $fieldName = $matches[2];
 
                     // Try to get the actual examination name if available
                     $examName = $this->input("examination.{$index}.name");
 
-                    if (!empty($examName)) {
+                    if (! empty($examName)) {
                         return [
-                            'field' => $field,
+                            'field'          => $field,
                             'readable_field' => "{$examName} {$fieldName}",
-                            'messages' => $messages,
+                            'messages'       => $messages,
                         ];
                     }
 
                     // If we're here, we either couldn't get the examination name or it wasn't provided
                     // Try to get program info to determine which examination is required
                     $programGroups = app(ProgramGroupService::class)->getProgramGroups();
-                    $programs = $programGroups->flatMap(fn($group) => $group['programs'])->values();
-                    $programId = $this->input('program_id');
+                    $programs      = $programGroups->flatMap(fn ($group) => $group['programs'])->values();
+                    $programId     = $this->input('program_id');
 
                     if ($programId) {
                         $selectedProgram = collect($programs)->firstWhere('id', $programId);
                         $requiredResults = $selectedProgram['examination_results'] ?? [];
 
                         if (isset($requiredResults[$index])) {
-                            $examTitle = $requiredResults[$index]['title'] ?? 'Examination #' . ($index + 1);
+                            $examTitle = $requiredResults[$index]['title'] ?? 'Examination #'.($index + 1);
 
                             return [
-                                'field' => $field,
+                                'field'          => $field,
                                 'readable_field' => "{$examTitle} {$fieldName}",
-                                'messages' => $messages,
+                                'messages'       => $messages,
                             ];
                         }
                     }
 
                     // Fall back to a generic but more readable format
                     return [
-                        'field' => $field,
-                        'readable_field' => 'Examination #' . ($index + 1) . " {$fieldName}",
-                        'messages' => $messages,
+                        'field'          => $field,
+                        'readable_field' => 'Examination #'.($index + 1)." {$fieldName}",
+                        'messages'       => $messages,
                     ];
                 }
 
                 // Handle document fields
                 if (preg_match('/^documents\.(\d+)\.(.+)$/', $field, $matches)) {
-                    $index = $matches[1];
+                    $index     = $matches[1];
                     $fieldName = $matches[2];
 
                     // Try to get the actual document name if available
                     $docName = $this->input("documents.{$index}.name");
 
-                    if (!empty($docName)) {
+                    if (! empty($docName)) {
                         return [
-                            'field' => $field,
+                            'field'          => $field,
                             'readable_field' => "{$docName}",
-                            'messages' => $messages,
+                            'messages'       => $messages,
                         ];
                     }
 
                     // Fall back to generic document name
                     return [
-                        'field' => $field,
-                        'readable_field' => 'Document #' . ($index + 1) . " {$fieldName}",
-                        'messages' => $messages,
+                        'field'          => $field,
+                        'readable_field' => 'Document #'.($index + 1)." {$fieldName}",
+                        'messages'       => $messages,
                     ];
                 }
 
                 return [
-                    'field' => $field,
+                    'field'          => $field,
                     'readable_field' => $field,
-                    'messages' => $messages,
+                    'messages'       => $messages,
                 ];
             })
             ->values()
             ->all();
 
         // Get the first error with its user-friendly field name
-        $firstError = collect($friendlyErrors)->first();
+        $firstError   = collect($friendlyErrors)->first();
         $firstMessage = isset($firstError['messages'][0]) ? $firstError['messages'][0] : 'Validation failed';
 
         // If it's an array field error, make it more user-friendly
@@ -423,9 +422,9 @@ class StoreAdmissionFormRequest extends FormRequest
         }
 
         throw new HttpResponseException(response()->json([
-            'success' => false,
-            'message' => $firstMessage,
-            'errors' => $errors,
+            'success'         => false,
+            'message'         => $firstMessage,
+            'errors'          => $errors,
             'readable_errors' => collect($friendlyErrors)->pluck('messages', 'readable_field')->toArray(),
         ], Response::HTTP_UNPROCESSABLE_ENTITY));
     }

@@ -2,7 +2,7 @@ import AdmissionFormView from '@/components/admission-form-view';
 import { Button } from '@/components/ui/button';
 import AdmissionFormLayout from '@/layouts/MainLayout';
 import { type AdmissionForm } from '@/types/database';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle2, Printer } from 'lucide-react';
 import React from 'react';
 
@@ -23,10 +23,6 @@ const AdmissionSuccess: React.FC<Props> = ({ form }) => {
         } catch (e) {
             return dateString;
         }
-    };
-
-    const handlePrint = () => {
-        window.print();
     };
 
     return (
@@ -72,7 +68,7 @@ const AdmissionSuccess: React.FC<Props> = ({ form }) => {
 
                             <Button
                                 variant="default"
-                                onClick={handlePrint}
+                                onClick={() => router.get(route('admission-form.download-pdf', { id: form.form_no }))}
                                 className="flex w-full items-center gap-2 bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 sm:w-auto sm:px-6"
                             >
                                 <Printer className="h-4 w-4" />

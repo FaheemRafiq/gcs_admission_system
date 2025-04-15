@@ -49,7 +49,7 @@ class ProgramGroupService
      * with the examination results of each program in the group. It then removes the
      * examination results from the group and returns the updated group. This is used
      * to flatten the results of the programs in a group.
-     * 
+     *
      * Program-specific examination results and document requirements take priority
      * over those defined at the program group level.
      *
@@ -71,35 +71,37 @@ class ProgramGroupService
                 $programDocuments = $program['document_requirements'] ?? [];
 
                 // Create associative arrays to make it easier to prioritize program-specific items
-                $mergedResults = [];
+                $mergedResults   = [];
                 $mergedDocuments = [];
-                
+
                 // First add group results/documents
                 foreach ($groupResults as $result) {
                     $mergedResults[$result['id']] = $result;
                 }
-                
+
                 foreach ($groupDocuments as $document) {
                     $documentId = $document['document']['id'] ?? $document['id'] ?? null;
+
                     if ($documentId) {
                         $mergedDocuments[$documentId] = $document;
                     }
                 }
-                
+
                 // Then add program-specific results/documents (will overwrite group items with the same ID)
                 foreach ($programResults as $result) {
                     $mergedResults[$result['id']] = $result;
                 }
-                
+
                 foreach ($programDocuments as $document) {
                     $documentId = $document['document']['id'] ?? $document['id'] ?? null;
+
                     if ($documentId) {
                         $mergedDocuments[$documentId] = $document;
                     }
                 }
-                
+
                 // Convert back to indexed arrays
-                $program['examination_results'] = array_values($mergedResults);
+                $program['examination_results']   = array_values($mergedResults);
                 $program['document_requirements'] = array_values($mergedDocuments);
 
                 $newProgramGroup['programs'][$key] = $program;

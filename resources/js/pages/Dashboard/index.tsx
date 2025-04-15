@@ -1,10 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { type AdmissionForm, type ResourcePaginator } from '@/types/database';
 import { Head } from '@inertiajs/react';
 import { CheckCircle, Clock, Users } from 'lucide-react';
-import AdmissionFormTable from './_components/data-table';
+import { BarChartComponent } from './_components/BarChartComponent';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -18,20 +17,16 @@ interface Props {
         totalAdmissions: number;
         pendingForms: number;
         approvedForms: number;
-    };
-    admissionForms: ResourcePaginator<AdmissionForm>;
-    filters: {
-        search: string;
-        per_page?: number; // Add per_page to filters
-    };
+    }
 }
 
-function Dashboard({ stats, admissionForms, filters }: Props) {
+function Dashboard({ stats }: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <div className="bg-background flex h-full flex-1 flex-col gap-6 p-4 sm:p-6 md:p-8">
+                
                 {/* Stats Section */}
                 <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                     <Card className="border-border bg-card border">
@@ -66,8 +61,8 @@ function Dashboard({ stats, admissionForms, filters }: Props) {
                     </Card>
                 </div>
 
-                {/* Admission Forms Table */}
-                <AdmissionFormTable admissionForms={admissionForms} filters={filters} />
+                {/* Bar Chart */}
+                <BarChartComponent />
             </div>
         </AppLayout>
     );

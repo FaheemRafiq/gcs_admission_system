@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\AdmissionForm;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class DocumentController extends Controller
@@ -12,7 +11,7 @@ class DocumentController extends Controller
     {
         $form = AdmissionForm::whereKey($formNo)->select('form_no', 'documents')->first();
 
-        if (!$form || empty($form->documents)) {
+        if (! $form || empty($form->documents)) {
             return back()->with('error', 'Admission form not found.');
         }
 
@@ -29,7 +28,7 @@ class DocumentController extends Controller
             return back()->with('error', 'Document not found.');
         }
 
-        if(!Storage::disk('private')->exists($filePath)) {
+        if (! Storage::disk('private')->exists($filePath)) {
             return back()->with('error', 'Document not found.');
         }
 
@@ -38,8 +37,8 @@ class DocumentController extends Controller
         // dd($filePath);
 
         return response()->file($filePath, [
-            'Content-Type'=> mime_content_type($filePath),
-            'Content-Disposition' => 'inline; filename="' . basename($filePath) . '"'
+            'Content-Type'        => mime_content_type($filePath),
+            'Content-Disposition' => 'inline; filename="'.basename($filePath).'"',
         ]);
     }
 }

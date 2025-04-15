@@ -18,7 +18,7 @@ const AdmissionFormShow: React.FC<Props> = ({ form }) => {
             <div className="flex items-center justify-center px-4 py-6 sm:px-6 lg:px-8">
                 <Head title="Admission Form View" />
 
-                <div className="bg-card text-card-foreground border-border w-full max-w-7xl overflow-hidden rounded-xl border">
+                <div className="bg-card text-card-foreground border-border w-full max-w-7xl overflow-hidden rounded-md border">
                     <div className="border-border flex items-center justify-between border-b p-3 shadow-sm">
                         <div>
                             <StatusDropdown formNo={form.form_no.toString()} status={form.status} />

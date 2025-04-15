@@ -368,7 +368,7 @@ class AdmissionService
                 return null;
             }
 
-            return AdmissionForm::with(['examinations' => fn($q) => $q->orderBy('id', 'ASC')])->where('form_no', $decoded['form_no'])->first();
+            return AdmissionForm::with(['examinations' => fn ($q) => $q->orderBy('id', 'ASC')])->where('form_no', $decoded['form_no'])->first();
         } catch (\Exception $e) {
             Log::channel('admission_form')->warning('Failed to decode form data', [
                 'form_data' => $form_data,

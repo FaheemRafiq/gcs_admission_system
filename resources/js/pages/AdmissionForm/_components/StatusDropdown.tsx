@@ -2,7 +2,6 @@ import { Check, X, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { router } from "@inertiajs/react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { FormStatus } from "@/types/database";
 
@@ -32,12 +31,12 @@ export default function StatusDropdown({ formNo, status }: StatusDropdownProps) 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <div className="flex items-center gap-2 p-1 rounded-lg border">
-                    <Badge className={`capitalize text-sm ${statusVariants[currentStatus]}`}>{currentStatus}</Badge>
-                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                <div className={`flex items-center gap-2 p-1 rounded-md border ${statusVariants[currentStatus]}`}>
+                    <Badge className={`capitalize text-sm bg-transparent`}>{currentStatus}</Badge>
+                    <ChevronDown className="h-4 w-4" />
                 </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-44 p-2 bg-white dark:bg-gray-800 shadow-md rounded-lg">
+            <DropdownMenuContent align="start" className="w-32 p-1 bg-white dark:bg-gray-800 shadow-md rounded-lg">
                 {(currentStatus === "pending" || currentStatus === "rejected") && (
                     <DropdownMenuItem
                         onSelect={() => updateStatus("approved")}

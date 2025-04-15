@@ -1,12 +1,11 @@
 import { formatDate, formatInto } from '@/lib/dates';
 import { type SharedData } from '@/types';
 import { type AdmissionForm } from '@/types/database';
-import { Link, router, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { EyeIcon, User } from 'lucide-react';
 import React, { Fragment, useState } from 'react';
 import FormKeyInfo from './form-key-info';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
 
