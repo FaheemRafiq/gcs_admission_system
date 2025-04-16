@@ -17,9 +17,10 @@ export interface NavGroup {
 
 export interface NavItem {
     title: string;
-    url: string;
+    url?: string;
     icon?: LucideIcon | null;
     isActive?: boolean;
+    group?: boolean;
 }
 
 export interface SharedData {

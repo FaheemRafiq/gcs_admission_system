@@ -70,7 +70,8 @@ class AdmissionForm extends Model
 
     public function setDocumentsAttribute($value)
     {
-        $this->attributes['documents'] = $value ? json_encode($value) : null;
+        $this->attributes['documents'] = is_array($value) ? json_encode($value) :
+            (is_string($value) && ($decoded = json_decode($value, true)) ? json_encode($decoded) : null);
     }
 
     public function getDocumentsAttribute($value)

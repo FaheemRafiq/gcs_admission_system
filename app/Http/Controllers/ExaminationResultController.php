@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Inertia\Inertia;
+use Illuminate\Http\Request;
 use App\Models\ExaminationResult;
-use App\Http\Requests\StoreExaminationResultRequest;
-use App\Http\Requests\UpdateExaminationResultRequest;
 
 class ExaminationResultController extends Controller
 {
@@ -13,7 +13,11 @@ class ExaminationResultController extends Controller
      */
     public function index()
     {
-        //
+        $examinationResults = ExaminationResult::all();
+
+        return Inertia::render('ExaminationResults/Index', [
+            'examinationResults' => $examinationResults,
+        ]);
     }
 
     /**
@@ -21,23 +25,21 @@ class ExaminationResultController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('ExaminationResults/Form');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreExaminationResultRequest $request)
+    public function store(Request $request)
     {
-        //
-    }
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+        ]);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(ExaminationResult $examinationResult)
-    {
-        //
+        ExaminationResult::create($validated);
+
+        return redirect()->route('examination-results.index')->with('success', 'Examination result created successfully.');
     }
 
     /**
@@ -45,15 +47,23 @@ class ExaminationResultController extends Controller
      */
     public function edit(ExaminationResult $examinationResult)
     {
-        //
+        return Inertia::render('ExaminationResults/Form', [
+            'examinationResult' => $examinationResult,
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateExaminationResultRequest $request, ExaminationResult $examinationResult)
+    public function update(Request $request, ExaminationResult $examinationResult)
     {
-        //
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+        ]);
+
+        $examinationResult->update($validated);
+
+        return redirect()->route('examination-results.index')->with('success', 'Examination result updated successfully.');
     }
 
     /**
@@ -61,6 +71,8 @@ class ExaminationResultController extends Controller
      */
     public function destroy(ExaminationResult $examinationResult)
     {
-        //
+        $examinationResult->delete();
+
+        return redirect()->route('examination-results.index')->with('success', 'Examination result deleted successfully.');
     }
 }

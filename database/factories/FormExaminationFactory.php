@@ -25,8 +25,8 @@ class FormExaminationFactory extends Factory
             'name'              => $examName,
             'year'              => $this->faker->year($this->faker->dateTimeBetween(...$yearRange[$examName])),
             'roll_no'           => $this->faker->numerify('#####'),
-            'marks'             => $this->faker->numberBetween(300, 1100),
-            'percentage'        => $this->faker->numberBetween(33, 100),
+            'total_marks'       => $totalMarks = $this->faker->numberBetween(500, 1100),
+            'obtained_marks'    => $this->faker->numberBetween(165, $totalMarks), // At least 33% to pass
             'subjects'          => implode(', ', $this->faker->randomElements(
                 ['English', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Urdu', 'Pakistan Studies'],
                 $this->faker->numberBetween(4, 7)
@@ -35,8 +35,6 @@ class FormExaminationFactory extends Factory
                 'BISE Lahore', 'BISE Karachi', 'University of Punjab', 'AIOU', 'BIEK',
             ]),
             'school_college' => $this->faker->company().' '.$this->faker->randomElement(['School', 'College']),
-            'created_at'     => $this->faker->dateTimeBetween('-1 year', 'now'),
-            'updated_at'     => $this->faker->dateTimeBetween('-1 year', 'now'),
         ];
     }
 }

@@ -13,7 +13,7 @@ type FormDocument = {
     mime_type: string | null;
     size: number;
     path: string;
-}
+};
 
 type FormExamination = {
     id: number;
@@ -56,7 +56,7 @@ type AdmissionForm = {
     photo_path: string;
     examinations: FormExamination[];
     form_key: string;
-    documents: FormDocument[] | null
+    documents: FormDocument[] | null;
 
     program?: Program;
 } & Timestamps;
@@ -67,7 +67,7 @@ type SubjectCombination = {
     subjects: string;
 } & Timestamps;
 
-type ExaminationResults = {
+type ExaminationResult = {
     id: number;
     title: string;
 } & Timestamps;
@@ -102,7 +102,7 @@ type ProgramGroup = {
     status: Status;
 
     programs?: Program[];
-    examination_results?: ExaminationResults[];
+    examination_results?: ExaminationResult[];
     document_requirements?: DocumentRequirement[];
     documents?: CustomDocument[];
 } & Timestamps;
@@ -117,7 +117,7 @@ type Program = {
 
     program_group?: ProgramGroup;
     shift?: Shift;
-    examination_results?: ExaminationResults[];
+    examination_results?: ExaminationResult[];
     subject_combinations?: SubjectCombination[];
     document_requirements?: DocumentRequirement[];
     documents?: CustomDocument[];
@@ -171,6 +171,9 @@ interface ResourcePaginator<T> {
 
 export {
     AdmissionForm,
+    CustomDocument as Document,
+    DocumentRequirement,
+    ExaminationResult,
     FormExamination,
     FormStatus,
     LengthAwarePaginator,

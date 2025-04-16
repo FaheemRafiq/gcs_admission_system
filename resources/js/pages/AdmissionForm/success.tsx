@@ -2,7 +2,7 @@ import AdmissionFormView from '@/components/admission-form-view';
 import { Button } from '@/components/ui/button';
 import AdmissionFormLayout from '@/layouts/MainLayout';
 import { type AdmissionForm } from '@/types/database';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle2, Printer } from 'lucide-react';
 import React from 'react';
 
@@ -21,8 +21,13 @@ const AdmissionSuccess: React.FC<Props> = ({ form }) => {
                 day: 'numeric',
             });
         } catch (e) {
+            console.error('Error formatting date:', e);
             return dateString;
         }
+    };
+
+    const handleDownloadPDF = () => {
+        window.open(route('admission-form.download-pdf', { form: form.form_no }), '_blank');
     };
 
     return (
@@ -37,19 +42,14 @@ const AdmissionSuccess: React.FC<Props> = ({ form }) => {
                             <CheckCircle2 className="h-10 w-10 flex-shrink-0 text-green-500" />
                             <h1 className="text-center text-2xl font-bold text-gray-800 sm:text-left sm:text-3xl">Form Submitted Successfully!</h1>
                         </div>
-                        <p className="max-w-3xl text-center sm:text-left text-lg text-gray-600">
-                            <span className="font-semibold text-xl text-gray-800">
-                                Congratulations, {form.name}!
+                        <p className="max-w-3xl text-center text-lg text-gray-600 sm:text-left">
+                            <span className="text-xl font-semibold text-gray-800">Congratulations, {form.name}!</span>
+                            <span className="mt-2 block text-base">
+                                Your admission form for the <span className="font-medium">{form.program?.program_full_name}</span> program has been
+                                successfully submitted.
                             </span>
-                            <span className="block mt-2 text-base">
-                                Your admission form for the <span className="font-medium">{form.program?.program_full_name}</span> program
-                                has been successfully submitted.
-                            </span>
-                            <span className="block mt-4 text-sm">
-                                Below are the details you provided for your records.
-                            </span>
+                            <span className="mt-4 block text-sm">Below are the details you provided for your records.</span>
                         </p>
-
                     </div>
 
                     <div className="p-4 sm:p-6 lg:p-8 print:p-4">
@@ -68,7 +68,7 @@ const AdmissionSuccess: React.FC<Props> = ({ form }) => {
 
                             <Button
                                 variant="default"
-                                onClick={() => router.get(route('admission-form.download-pdf', { id: form.form_no }))}
+                                onClick={() => handleDownloadPDF()}
                                 className="flex w-full items-center gap-2 bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 sm:w-auto sm:px-6"
                             >
                                 <Printer className="h-4 w-4" />

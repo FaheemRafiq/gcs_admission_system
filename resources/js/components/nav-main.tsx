@@ -6,18 +6,23 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
     const page = usePage();
     return (
         <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
             <SidebarMenu>
-                {items.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild isActive={item.url === page.url}>
-                            <Link href={item.url} prefetch>
-                                {item.icon && <item.icon />}
-                                <span>{item.title}</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                ))}
+                {items.map((item) =>
+                    item.group ? (
+                        <SidebarGroupLabel key={item.title} className="mt-4 first:mt-0">
+                            {item.title}
+                        </SidebarGroupLabel>
+                    ) : item.url ? (
+                        <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton asChild isActive={item.url === page.url}>
+                                <Link href={item.url} prefetch>
+                                    {item.icon && <item.icon />}
+                                    <span>{item.title}</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    ) : null,
+                )}
             </SidebarMenu>
         </SidebarGroup>
     );

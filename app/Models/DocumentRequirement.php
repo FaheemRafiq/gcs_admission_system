@@ -29,7 +29,7 @@ class DocumentRequirement extends Model
         return $this->belongsTo(Document::class);
     }
 
-    public function programGroup(): BelongsTo
+    public function program_group(): BelongsTo
     {
         return $this->belongsTo(ProgramGroup::class);
     }

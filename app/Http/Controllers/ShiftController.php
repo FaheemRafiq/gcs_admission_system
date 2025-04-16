@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Inertia\Inertia;
 use App\Models\Shift;
-use App\Http\Requests\StoreShiftRequest;
-use App\Http\Requests\UpdateShiftRequest;
+use Illuminate\Http\Request;
 
 class ShiftController extends Controller
 {
@@ -13,7 +13,11 @@ class ShiftController extends Controller
      */
     public function index()
     {
-        //
+        $shifts = Shift::all();
+
+        return Inertia::render('Shifts/Index', [
+            'shifts' => $shifts,
+        ]);
     }
 
     /**
@@ -21,23 +25,22 @@ class ShiftController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('Shifts/Form');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreShiftRequest $request)
+    public function store(Request $request)
     {
-        //
-    }
+        $validated = $request->validate([
+            'name'       => 'required|string|max:255',
+            'status'     => 'required|in:active,inactive',
+        ]);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Shift $shift)
-    {
-        //
+        Shift::create($validated);
+
+        return redirect()->route('shifts.index')->with('success', 'Shift created successfully.');
     }
 
     /**
@@ -45,15 +48,24 @@ class ShiftController extends Controller
      */
     public function edit(Shift $shift)
     {
-        //
+        return Inertia::render('Shifts/Form', [
+            'shift' => $shift,
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateShiftRequest $request, Shift $shift)
+    public function update(Request $request, Shift $shift)
     {
-        //
+        $validated = $request->validate([
+            'name'       => 'required|string|max:255',
+            'status'     => 'required|in:active,inactive',
+        ]);
+
+        $shift->update($validated);
+
+        return redirect()->route('shifts.index')->with('success', 'Shift updated successfully.');
     }
 
     /**
@@ -61,6 +73,8 @@ class ShiftController extends Controller
      */
     public function destroy(Shift $shift)
     {
-        //
+        $shift->delete();
+
+        return redirect()->route('shifts.index')->with('success', 'Shift deleted successfully.');
     }
 }

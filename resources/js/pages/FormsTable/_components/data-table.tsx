@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { type AdmissionForm, type ResourcePaginator } from '@/types/database';
 import { router } from '@inertiajs/react';
 import { Column, ColumnPinningState, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, DownloadIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, DownloadIcon, TableOfContentsIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { columns } from './columns';
 
@@ -71,10 +71,13 @@ function AdmissionFormTable({ admissionForms: initialAdmissionForms, filters }: 
     });
 
     return (
-        <div className="border-border bg-card flex flex-1 flex-col justify-between rounded-xl border p-4">
+        <div className="bg-card flex flex-1 flex-col justify-between">
             <div>
                 <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Admission Forms</h2>
+                    <div className="flex items-center gap-2">
+                        <TableOfContentsIcon className="h-6 w-6" />
+                        <h2 className="text-2xl font-semibold">Admission Forms</h2>
+                    </div>
                     <div className="flex gap-2">
                         <Input
                             placeholder="Search forms..."

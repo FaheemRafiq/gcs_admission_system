@@ -9,7 +9,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Program extends Model
 {
     /** @use HasFactory<\Database\Factories\ProgramFactory> */
-    use HasFactory, StatusTrait;
+    use HasFactory;
+
+    use StatusTrait;
 
     protected $fillable = [
         'name',
@@ -54,5 +56,10 @@ class Program extends Model
     public function documentRequirements()
     {
         return $this->hasMany(DocumentRequirement::class);
+    }
+
+    public function admissionForms()
+    {
+        return $this->hasMany(AdmissionForm::class);
     }
 }

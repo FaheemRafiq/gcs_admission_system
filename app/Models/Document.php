@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Document extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = [
+        'name',
+    ];
 
     public $timestamps = false;
 
@@ -16,5 +18,10 @@ class Document extends Model
     public function getDocumentKeyAttribute()
     {
         return Str::snake($this->name);
+    }
+
+    public function documentRequirements()
+    {
+        return $this->hasMany(DocumentRequirement::class);
     }
 }

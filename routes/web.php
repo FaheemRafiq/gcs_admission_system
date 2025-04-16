@@ -2,10 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormsTableController;
+use App\Http\Controllers\ProgramGroupController;
 use App\Http\Controllers\AdmissionFormController;
+use App\Http\Controllers\ExaminationResultController;
+use App\Http\Controllers\DocumentRequirementController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/admission-form', [AdmissionFormController::class, 'index'])->name('admission-form.index');
@@ -26,4 +31,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Documents
     Route::get('/document/{documentKey}/view/{formNo}', [DocumentController::class, 'viewDocument'])->name('document.view');
+
+    // Shifts
+    Route::resource('shifts', ShiftController::class);
+
+    // Programs
+    Route::resource('programs', ProgramController::class);
+    Route::get('/programs/{program}/examination-results', [ProgramController::class, 'examinationResults'])->name('programs.examination-results');
+    Route::post('/programs/{program}/examination-results', [ProgramController::class, 'assignExaminationResults'])->name('programs.assign-examination-results');
+
+    // Program Groups
+    Route::resource('program-groups', ProgramGroupController::class);
+    Route::get('/program-groups/{programGroup}/examination-results', [ProgramGroupController::class, 'examinationResults'])->name('program-groups.examination-results');
+    Route::post('/program-groups/{programGroup}/examination-results', [ProgramGroupController::class, 'assignExaminationResults'])->name('program-groups.assign-examination-results');
+
+    // Examination Results
+    Route::resource('examination-results', ExaminationResultController::class);
+
+    // Document Requirements
+    Route::resource('document-requirements', DocumentRequirementController::class);
+
+    // Document Routes
+    Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+    Route::get('/documents/create', [DocumentController::class, 'create'])->name('documents.create');
+    Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
+    Route::get('/documents/{document}/edit', [DocumentController::class, 'edit'])->name('documents.edit');
+    Route::put('/documents/{document}', [DocumentController::class, 'update'])->name('documents.update');
+    Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 });

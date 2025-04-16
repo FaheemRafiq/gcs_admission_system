@@ -24,7 +24,7 @@ class AdmissionFormController extends Controller
     ) {
         //
     }
-    
+
     public function index()
     {
         // Cache program groups to improve performance
@@ -131,8 +131,7 @@ class AdmissionFormController extends Controller
 
     public function downloadPdf(AdmissionForm $form)
     {
-        $form->load('program.programGroup');
-
-        return Inertia::render('AdmissionForm/download', ['formData' => $form]);
+        $form->load('program.programGroup', 'examinations');
+        return view('pdf.admission-form', compact('form'));
     }
 }
