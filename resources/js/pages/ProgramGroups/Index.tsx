@@ -116,7 +116,12 @@ export default function Index({ programGroups }: Props) {
                     open={open}
                     setOpen={setOpen}
                     title="Delete Program Group"
-                    description={`Are you sure you want to delete "${programGroupToDelete?.name}"? This action cannot be undone.`}
+                    description={
+                        <>
+                            Are you sure you want to delete <strong>"{programGroupToDelete?.name}"</strong>?{' '}
+                            <strong>This action cannot be undone.</strong>
+                        </>
+                    }
                     onConfirm={() => {
                         router.delete(route('program-groups.destroy', programGroupToDelete?.id));
                     }}

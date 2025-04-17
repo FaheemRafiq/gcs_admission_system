@@ -104,10 +104,14 @@ export default function Index({ combinations }: Props) {
                     open={open}
                     setOpen={setOpen}
                     title="Delete Subject Combination"
-                    description={`Are you sure you want to delete this combination of subjects: ${combinationToDelete?.subjects.join(', ')} for ${combinationToDelete?.program?.name}? This action cannot be undone.`}
+                    description={
+                        <>
+                            Are you sure you want to delete this combination of subjects: <strong>{combinationToDelete?.subjects.join(', ')}</strong>{' '}
+                            for <strong>{combinationToDelete?.program?.name}</strong>? <strong>This action cannot be undone.</strong>
+                        </>
+                    }
                     onConfirm={() => {
                         router.delete(route('subject-combinations.destroy', combinationToDelete?.id));
-                        setOpen(false);
                     }}
                 />
             </div>
