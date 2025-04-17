@@ -64,7 +64,11 @@ type AdmissionForm = {
 type SubjectCombination = {
     id: number;
     program_id: number;
-    subjects: string;
+    shift_id: number;
+    subjects: string[];
+
+    program?: Program;
+    shift?: Shift;
 } & Timestamps;
 
 type ExaminationResult = {

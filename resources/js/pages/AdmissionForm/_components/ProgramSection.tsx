@@ -26,8 +26,15 @@ const ProgramSection = withForm({
         }, [programGroups, updatedShift]);
 
         const subjectCombinations = React.useMemo(() => {
-            return shiftGroupPrograms.flatMap((pg) => pg?.programs || []).find((pg) => pg.id === Number(updatedProgram))?.subject_combinations || [];
-        }, [shiftGroupPrograms, updatedProgram]);
+            let combinations =
+                shiftGroupPrograms.flatMap((pg) => pg?.programs || []).find((pg) => pg.id === Number(updatedProgram))?.subject_combinations || [];
+
+            if (updatedShift) {
+                combinations = combinations.filter((combination) => combination.shift_id === Number(updatedShift) || combination.shift_id === null);
+            }
+
+            return combinations;
+        }, [shiftGroupPrograms, updatedProgram, updatedShift]);
 
         return (
             <div className="border-border border-t pt-6">
@@ -125,7 +132,7 @@ const ProgramSection = withForm({
                                         <SelectContent>
                                             {subjectCombinations.map((combination) => (
                                                 <SelectItem value={combination.id.toString()} key={combination.id}>
-                                                    {combination.subjects}
+                                                    {combination.subjects.join(', ')}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

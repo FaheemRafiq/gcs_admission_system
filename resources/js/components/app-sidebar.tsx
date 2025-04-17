@@ -17,24 +17,9 @@ const mainNavItems: NavItem[] = [
         group: true,
     },
     {
-        title: 'Forms',
+        title: 'Admission Forms',
         url: route('admission-forms.index'),
         icon: TableOfContents,
-    },
-    {
-        title: 'Documents',
-        url: route('documents.index'),
-        icon: FileIcon,
-    },
-    {
-        title: 'Document Requirements',
-        url: route('document-requirements.index'),
-        icon: FileText,
-    },
-    {
-        title: 'Examination Results',
-        url: route('examination-results.index'),
-        icon: ClipboardList,
     },
     {
         title: 'Program Management',
@@ -46,14 +31,38 @@ const mainNavItems: NavItem[] = [
         icon: GraduationCap,
     },
     {
-        title: 'Program Groups',
-        url: route('program-groups.index'),
+        title: 'Document Requirements',
+        url: route('document-requirements.index'),
+        icon: FileText,
+    },
+    {
+        title: 'Subject Combinations',
+        url: route('subject-combinations.index'),
         icon: BookOpen,
+    },
+    {
+        title: 'Core Management',
+        group: true,
     },
     {
         title: 'Shifts',
         url: route('shifts.index'),
         icon: ClockIcon,
+    },
+    {
+        title: 'Program Groups',
+        url: route('program-groups.index'),
+        icon: BookOpen,
+    },
+    {
+        title: 'Examination Results',
+        url: route('examination-results.index'),
+        icon: ClipboardList,
+    },
+    {
+        title: 'Documents',
+        url: route('documents.index'),
+        icon: FileIcon,
     },
 ];
 

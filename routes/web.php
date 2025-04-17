@@ -11,6 +11,7 @@ use App\Http\Controllers\ProgramGroupController;
 use App\Http\Controllers\AdmissionFormController;
 use App\Http\Controllers\ExaminationResultController;
 use App\Http\Controllers\DocumentRequirementController;
+use App\Http\Controllers\SubjectCombinationController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/admission-form', [AdmissionFormController::class, 'index'])->name('admission-form.index');
@@ -58,4 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/documents/{document}/edit', [DocumentController::class, 'edit'])->name('documents.edit');
     Route::put('/documents/{document}', [DocumentController::class, 'update'])->name('documents.update');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+
+    // Subject Combinations Routes
+    Route::resource('subject-combinations', SubjectCombinationController::class);
 });
