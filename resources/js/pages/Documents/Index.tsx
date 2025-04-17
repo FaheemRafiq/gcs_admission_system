@@ -100,7 +100,12 @@ export default function Index({ documents }: Props) {
                     open={open}
                     setOpen={setOpen}
                     title="Delete Document"
-                    description={`Are you sure you want to delete the document "${documentToDelete?.name}"? This action cannot be undone.`}
+                    description={
+                        <>
+                            Are you sure you want to delete the document <strong>"{documentToDelete?.name}"</strong>?{' '}
+                            <strong>This action cannot be undone.</strong>
+                        </>
+                    }
                     onConfirm={() => {
                         router.delete(route('documents.destroy', documentToDelete?.id));
                     }}

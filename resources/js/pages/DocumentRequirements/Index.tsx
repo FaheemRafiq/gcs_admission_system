@@ -111,7 +111,12 @@ export default function Index({ documentRequirements }: Props) {
                     open={open}
                     setOpen={setOpen}
                     title="Delete Document Requirement"
-                    description={`Are you sure you want to delete this "${requirementToDelete?.document?.name}" document requirement"? This action cannot be undone.`}
+                    description={
+                        <>
+                            Are you sure you want to delete this <strong>"{requirementToDelete?.document?.name}"</strong> document requirement?{' '}
+                            <strong>This action cannot be undone.</strong>
+                        </>
+                    }
                     onConfirm={() => {
                         router.delete(route('document-requirements.destroy', requirementToDelete?.id));
                     }}

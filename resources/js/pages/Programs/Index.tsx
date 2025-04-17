@@ -113,7 +113,11 @@ export default function Index({ programs }: Props) {
                     open={open}
                     setOpen={setOpen}
                     title="Delete Program"
-                    description={`Are you sure you want to delete "${programToDelete?.name}"? This action cannot be undone.`}
+                    description={
+                        <>
+                            Are you sure you want to delete <strong>"{programToDelete?.name}"</strong>? <strong>This action cannot be undone.</strong>
+                        </>
+                    }
                     onConfirm={() => {
                         router.delete(route('programs.destroy', programToDelete?.id));
                     }}

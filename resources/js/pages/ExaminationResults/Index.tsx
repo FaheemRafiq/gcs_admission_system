@@ -99,7 +99,11 @@ export default function Index({ examinationResults }: Props) {
                     open={open}
                     setOpen={setOpen}
                     title="Delete Examination Result"
-                    description={`Are you sure you want to delete "${resultToDelete?.title}"? This action cannot be undone.`}
+                    description={
+                        <>
+                            Are you sure you want to delete <strong>"{resultToDelete?.title}"</strong>? <strong>This action cannot be undone.</strong>
+                        </>
+                    }
                     onConfirm={() => {
                         router.delete(route('examination-results.destroy', resultToDelete?.id));
                     }}

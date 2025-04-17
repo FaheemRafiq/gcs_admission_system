@@ -23,7 +23,7 @@ export default function Form({ programs, shifts, combination }: Props) {
     const defaultValues = useMemo(
         () => ({
             program_id: combination?.program_id?.toString() || '',
-            shift_id: combination?.shift_id?.toString() || '',
+            shift_id: combination?.shift_id?.toString() || 'null',
             subjects: subjects,
         }),
         [combination?.program_id, combination?.shift_id, subjects],
@@ -36,7 +36,7 @@ export default function Form({ programs, shifts, combination }: Props) {
                 const payload = {
                     ...value,
                     program_id: parseInt(value.program_id),
-                    shift_id: parseInt(value.shift_id),
+                    shift_id: value.shift_id === 'null' ? null : parseInt(value.shift_id),
                     subjects: value.subjects.filter((subject) => subject !== null && subject.trim() !== ''),
                 };
 
@@ -156,6 +156,7 @@ export default function Form({ programs, shifts, combination }: Props) {
                                                     <SelectValue placeholder="Select a shift" />
                                                 </SelectTrigger>
                                                 <SelectContent>
+                                                    <SelectItem value="null">Both</SelectItem>
                                                     {shifts.map((shift) => (
                                                         <SelectItem key={shift.id} value={shift.id.toString()}>
                                                             {shift.name}
